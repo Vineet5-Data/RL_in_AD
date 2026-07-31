@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 # Which OSM city graph each GPS source is matched against.
 CITY_OF_SOURCE = {"geolife": "beijing", "tdrive": "beijing", "porto": "porto"}

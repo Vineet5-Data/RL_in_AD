@@ -61,15 +61,23 @@ Negative results here were as decision-relevant as the positives — each one cl
 
 ## Repository contents
 
-This repository holds the **research record and documentation** for the project: the consolidated project log, the literature base used for competitive/technical grounding, and the standing engineering conventions. The active development codebase (world-model training, HMM baseline, matcher package, evaluation harnesses) lives in local git worktrees under active iteration and is not yet published here.
-
 ```
+src/
+  matcher.py, test_matcher.py    production matching/prediction API (offline + online + predict)
+  models/                        world model (decoder-light RSSM), GPS/road encoders
+  training/                      training stages (stage0-3, decoder-light retrain, TPU/XLA port)
+  hmm_baseline/                  classical geometric HMM Viterbi fallback (no GPU, no training)
+  dataset/, preprocessing/, roadgraph/   GPS cleaning, road-graph construction, candidate retrieval
+  eval_*.py, diag_*.py           evaluation harnesses and diagnostic probes referenced in the project log
+  tests/                         unit tests for the data/road-graph pipeline
 research/
   project_summary.md         the single active project log — current results, full run history, roadmap
   critique_and_next_steps.md adversarial internal review of an early architecture proposal
   archive/                   retired docs, kept verbatim as the historical experimental record
 literature_papers/           structured summaries of the papers used for prior-art and technique grounding
 ```
+
+`src/` holds the current, production-line code only — retired Track-A (posterior-collapsed reconstruction model) evaluation scripts and exact duplicate copies from intermediate experiment branches are left out. Running it end-to-end needs the road-graph/GPS data and checkpoints, which aren't included here.
 
 ## Roadmap
 

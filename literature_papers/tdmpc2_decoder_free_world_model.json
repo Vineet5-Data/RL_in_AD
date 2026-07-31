@@ -1,0 +1,41 @@
+{
+  "basic_info": {
+    "title": "TD-MPC2: Scalable, Robust World Models for Continuous Control",
+    "authors": [
+      "Nicklas Hansen",
+      "Hao Su",
+      "Xiaolong Wang"
+    ],
+    "affiliation": "UC San Diego (consortium; not fully confirmed from abstract page)",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Learning Representations (ICLR 2024)",
+      "year": 2024
+    },
+    "link": "https://arxiv.org/abs/2310.16828",
+    "code_available": "tdmpc2.com (videos, models, data, code)"
+  },
+  "method": {
+    "task": "model_based_RL",
+    "input_representation": "proprioceptive_or_pixel_observations",
+    "sequence_model": "implicit_decoder_free_world_model",
+    "training_signal": "RL_reward_plus_latent_trajectory_optimization",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "MPC_over_learned_latent_dynamics",
+    "notes": "Performs local trajectory optimization (MPC) directly in the latent space of a learned IMPLICIT world model that has NO reconstruction decoder at all -- the model never predicts raw observations, only latent-space value/reward/dynamics. Scales to 317M-parameter multi-task agents across 80 tasks and 104 online RL tasks. This is the most direct 2023-2024 evidence for the 'reconstruction-free world model' trend: the entire class of decoder-vs-latent competition that causes Stage-2's posterior collapse (MDN GPS head + RoadScorer head both reading (h,z) and satisfying loss via h alone) cannot occur in a model with no observation-reconstruction decoder in the first place, because there is no decoder for h to freeload on."
+  },
+  "gap_analysis": {
+    "pillars_covered": ["P2 (inspires only; wrong domain)"],
+    "whats_missing": "Continuous-control robotics benchmark (locomotion, manipulation), not GPS map matching. Confirms the decoder-free world-model design pattern exists and scales, but never touches road graphs or GPS.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_reasoning": "Same class as Think2Drive/DreamerV2/V3 -- architectural inspiration only, wrong domain; does not pre-empt the thesis's GPS map-matching application."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; cited as evidence for the 'remove/de-emphasize the reconstruction decoder entirely' direction as a more radical alternative to Change 13's dropout/aux-loss patches, if those prove insufficient -- Stage 2 could in principle drop or heavily de-weight the MDN GPS reconstruction head and rely on latent-space value/road prediction only, at the cost of losing direct GPS-decode interpretability."
+  },
+  "uncertain": [
+    "Whether a fully decoder-free redesign is compatible with Stage-2's evaluation protocol, which currently reports cl_gps (a reconstruction metric) as a primary gate -- removing the decoder would require redefining that gate entirely, not evaluated here."
+  ]
+}

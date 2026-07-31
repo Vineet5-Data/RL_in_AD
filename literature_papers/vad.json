@@ -1,0 +1,30 @@
+{
+  "paper_id": "P12",
+  "basic_info": {
+    "title": "VAD: Vectorized Scene Representation for Efficient Autonomous Driving",
+    "authors": "Bo Jiang, Shaoyu Chen, Qing Xu, Bencheng Liao, Jiajie Chen, Helong Zhou, Qian Zhang, Wenyu Liu, Chang Huang, Xinggang Wang (Horizon Robotics / Huazhong University of Science and Technology)",
+    "venue": "ICCV 2023",
+    "link": "https://arxiv.org/abs/2303.12077",
+    "code_available": "https://github.com/hustvl/VAD"
+  },
+  "method": {
+    "task": ["AD_planning", "end_to_end_autonomous_driving", "motion_prediction", "online_vectorized_mapping"],
+    "input_representation": "vectorized_graph",
+    "sequence_model": "Transformer",
+    "training_signal": "supervised",
+    "graph_integration": "graph_attention",
+    "semantic_enrichment": "traffic_semantics",
+    "decision_paradigm": "one_shot_seq2seq"
+  },
+  "gap_analysis": {
+    "pillars_covered": ["semantic_vectorized_transformer_encoder (INSPIRES ONLY)"],
+    "whats_missing": "VAD directly inspires the transformer-encoder-over-vectorized-scene pillar (fully vectorized agents + map elements encoded with transformer/query attention), but it is an end-to-end AD planner, not a GPS map-matching method. It consumes multi-view camera features to build vectorized maps/agents on nuScenes and outputs a planned trajectory; it never ingests raw fleet GPS and performs no GPS-to-road-segment matching.",
+    "novelty_vs_recombination": "partial_overlap",
+    "novelty_vs_recombination_note": "Partial overlap: the vectorized transformer scene-encoder pillar is well established here, but only for AD planning, leaving its use for label-free GPS map matching open."
+  },
+  "relevance": {
+    "proximity": "background_inspiration",
+    "bmw_relevance": "Architectural inspiration only (it is cited directly in the thesis hypothesis for the vectorized transformer encoder); it operates on AD control/planning, not BMW fleet GPS analytics or map matching."
+  },
+  "uncertain": []
+}

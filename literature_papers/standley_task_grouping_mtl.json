@@ -1,0 +1,44 @@
+{
+  "basic_info": {
+    "title": "Which Tasks Should Be Learned Together in Multi-task Learning?",
+    "authors": [
+      "Trevor Standley",
+      "Amir R. Zamir",
+      "Dawn Chen",
+      "Leonidas Guibas",
+      "Jitendra Malik",
+      "Silvio Savarese"
+    ],
+    "affiliation": "Stanford University",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Machine Learning (ICML 2020)",
+      "year": 2020
+    },
+    "link": "https://arxiv.org/abs/1905.07553",
+    "code_available": "project website: taskgrouping.stanford.edu"
+  },
+  "method": {
+    "task": "multi_task_learning_analysis",
+    "input_representation": "N/A",
+    "sequence_model": "N/A",
+    "training_signal": "supervised_multi_task",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Shows empirically that tasks sharing a network compete for representation capacity, and that which tasks cooperate vs. compete cannot be reliably predicted from task similarity alone -- some pairs help each other, others actively hurt each other's accuracy when trained jointly, depending on gradient geometry and capacity allocation. Proposes a framework to search for which task GROUPINGS to co-train vs. separate. Directly explains the 'hit@1 degrades while cl_gps improves with continued Stage-2 training' pattern found in evaluation_findings.md: the MDN GPS reconstruction head (dense, continuous, high-gradient-bandwidth) and the RoadScorer head (discrete CE, likely lower/sparser gradient signal) share the same (h,z) representation, and this paper's finding is that such asymmetric-bandwidth task pairs progressively favor the stronger task as training proceeds -- exactly the observed degradation."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or pillar-novelty paper -- included as the literature explanation for a specific Stage-2 training pathology (road quality degrading while GPS quality improves).",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Relevant only as the general multi-task-learning finding that explains why two heads sharing (h,z) can progressively diverge in training quality without either being 'broken'."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; cited to correctly frame the newly observed 'hit@1 degrades while cl_gps improves' pattern (Change-13 evaluation) as ordinary multi-task gradient competition/negative transfer between the MDN GPS head and RoadScorer head, not a novel or RSSM-specific failure mode requiring its own bespoke fix."
+  },
+  "uncertain": [
+    "The paper's task-grouping search method itself (branch-and-bound over task-assignment trees) was not evaluated for direct applicability to Stage-2's two-head setup -- cited only for its diagnostic framing, not as a proposed algorithmic fix."
+  ]
+}

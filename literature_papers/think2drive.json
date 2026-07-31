@@ -1,0 +1,30 @@
+{
+  "paper_id": "P13",
+  "basic_info": {
+    "title": "Think2Drive: Efficient Reinforcement Learning by Thinking in Latent World Model for Quasi-Realistic Autonomous Driving (in CARLA-v2)",
+    "authors": "Qifeng Li, Xiaosong Jia, Shaobo Wang, Junchi Yan (Shanghai Jiao Tong University)",
+    "venue": "ECCV 2024",
+    "link": "https://arxiv.org/abs/2402.16720",
+    "code_available": "no (no official code release found; related benchmark Bench2Drive/CornerCase-Repository at https://github.com/Thinklab-SJTU/Bench2Drive)"
+  },
+  "method": {
+    "task": ["AD_planning", "model_based_RL", "closed_loop_driving"],
+    "input_representation": "vectorized_graph",
+    "sequence_model": "hybrid",
+    "training_signal": "RL_reward",
+    "graph_integration": "none",
+    "semantic_enrichment": "traffic_semantics",
+    "decision_paradigm": "sequential_decision_RL"
+  },
+  "gap_analysis": {
+    "pillars_covered": ["latent_space_RL_decisions (INSPIRES ONLY)"],
+    "whats_missing": "Think2Drive directly inspires the latent-world-model RL pillar (a DreamerV3-style compact latent world model acting as a neural simulator in which the planner is trained), but it is a model-based RL driving planner in the CARLA-v2 simulator, not a GPS map-matching method. It learns from simulated AD state/BEV observations and outputs low-level control, never ingesting raw fleet GPS and never performing GPS-to-road matching.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_vs_recombination_note": "Real gap: latent-world-model RL has not been applied to sequential road-segment selection / GPS map matching."
+  },
+  "relevance": {
+    "proximity": "background_inspiration",
+    "bmw_relevance": "Architectural inspiration only (cited directly in the thesis hypothesis for latent-space RL decisions); it operates on AD simulator control, not BMW fleet GPS analytics or map matching."
+  },
+  "uncertain": ["sequence_model_internal_architecture_details", "semantic_enrichment"]
+}

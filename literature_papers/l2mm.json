@@ -1,0 +1,29 @@
+{
+  "basic_info": {
+    "title": "L2MM: Learning to Map Matching with Deep Models for Low-Quality GPS Trajectory Data",
+    "authors": ["Linli Jiang", "Chao-Xiong Chen", "Chao Chen"],
+    "venue": "ACM Transactions on Knowledge Discovery from Data (TKDD), Vol. 17, Issue 3, Article 39 (February 2023; DOI registered 2022)",
+    "link": "https://dl.acm.org/doi/10.1145/3550486",
+    "code_available": "https://github.com/JiangLinLi/L2MM"
+  },
+  "method": {
+    "task": "map_matching",
+    "input_representation": "raw_GPS_sequence",
+    "sequence_model": "RNN_GRU",
+    "training_signal": "self_supervised",
+    "graph_integration": "[uncertain]",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "one_shot_seq2seq",
+    "critic_note": "graph_integration downgraded to [uncertain] by critic-anti-drift: agent set GNN_road_embedding but its own summary described L2MM as RNN/seq2seq representation learning with no GNN mentioned. Verify before asserting."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "L2MM learns trajectory/path representations in a latent space (with two enhancement schemes: high-frequency-trajectory enhancement and data-distribution regularization) and maps low-quality GPS to paths via a seq2seq-style joint optimization, but it relies on an RNN/seq2seq encoder rather than a transformer over a vectorized semantic road graph, it makes no sequential RL decisions, and it is trained with supervised path/trajectory pairs and high-quality reference trajectories rather than label-free on raw fleet GPS. It carries no RDF/KG semantic enrichment.",
+    "novelty_vs_recombination": "partial_overlap"
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "Directly targets aligning noisy, low-sampling-rate GPS to the road network, which is the central preprocessing problem for BMW fleet-trajectory analytics, though it offers no semantic-graph or label-free latent-RL component."
+  },
+  "uncertain": ["graph_integration"]
+}

@@ -1,0 +1,60 @@
+{
+  "basic_info": {
+    "title": "DeepMM: Deep Learning Based Map Matching with Data Augmentation",
+    "authors_conference_sigspatial_2019": [
+      "Kai Zhao",
+      "Jie Feng",
+      "Zhao Xu",
+      "Tong Xia",
+      "Lin Chen",
+      "Funing Sun",
+      "Diansheng Guo",
+      "Depeng Jin",
+      "Yong Li"
+    ],
+    "authors_journal_tmc_2020": [
+      "Jie Feng",
+      "Yong Li",
+      "Kai Zhao",
+      "Zhao Xu",
+      "Tong Xia",
+      "Jinglin Zhang",
+      "Depeng Jin"
+    ],
+    "venue": {
+      "type": "conference_short_paper_plus_journal_extension",
+      "conference": "27th ACM SIGSPATIAL International Conference on Advances in Geographic Information Systems (SIGSPATIAL 2019), pp. 452-455",
+      "journal": "IEEE Transactions on Mobile Computing (TMC), vol. 21, no. 7, pp. 2372-2384, 2020"
+    },
+    "link": "https://vonfeng.github.io/files/SIGSPATIAl-DeepMM.pdf (conference PDF); journal DOI https://ieeexplore.ieee.org/document/9288879/",
+    "code_available": "https://github.com/vonfeng/DeepMapMatching"
+  },
+  "method": {
+    "task": "map_matching",
+    "input_representation": "raster_grid",
+    "sequence_model": "RNN_GRU",
+    "training_signal": "supervised",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "one_shot_seq2seq",
+    "notes": "Encoder-decoder (seq2seq) with attention: the input GPS trajectory is discretized into grid cells and embedded; the model translates this 'trajectory' token sequence into an output sequence of road-segment IDs, performing the matching in a learned latent embedding space (robust to noise/sparseness and able to absorb mobility patterns). RNN-based seq2seq (LSTM/GRU-style recurrent encoder-decoder); marked as RNN_GRU but [uncertain] on the exact recurrent cell. Training is supervised on (trajectory, road-sequence) pairs, but ground-truth labels are obtained largely via DATA AUGMENTATION rather than human labels: (a) statistic-based augmentation and (b) generation-based augmentation that synthesizes trajectories from GraphHopper shortest paths plus perturbation/downsampling/noise. Reported to beat HMM/ST-Matching/FMM baselines by >10% absolute accuracy in noisy/sparse settings. Input is grid-raster GPS, NOT a vectorized road-network graph."
+  },
+  "gap_analysis": {
+    "pillars_covered": [
+      "label_free_training"
+    ],
+    "pillars_partial": [
+      "latent_space_RL_decisions"
+    ],
+    "whats_missing": "Covers part of the 'latent space' idea (it explicitly matches in a learned latent embedding space) and arguably the 'label-free' pillar (its supervision comes from synthetically generated/augmented trajectories with no manual labels), but the latent decisions are made by a one-shot attentional seq2seq decoder, NOT a reinforcement-learning agent making sequential decisions, and there is no RL reward or world-model. It also lacks the semantic vectorized transformer encoder: it uses an RNN seq2seq over grid-cell tokens with no transformer, no GNN, and no RDF/road-type/POI semantic enrichment of the road graph.",
+    "novelty_vs_recombination": "partial_overlap",
+    "novelty_reasoning": "DeepMM foreshadows two of the three pillars (latent-space matching and avoidance of manual labels via generated data) and is therefore the closest existing 'deep map matching in latent space' precedent, but it occupies a different point in the design space: RNN seq2seq + grid input + supervised-on-synthetic-data, versus the thesis's transformer-over-vectorized-semantic-graph + RL-in-latent-space + label-free-on-raw-fleet-GPS, leaving the specific hybrid genuinely unoccupied."
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "Highly relevant to BMW fleet-trajectory analytics: it is explicitly motivated by fleet management / trajectory big data and demonstrates that a learned latent-space matcher can exploit fleet mobility patterns to outperform HMM on the noisy, sparse GPS typical of real fleets, which is the regime the Foresight project targets."
+  },
+  "uncertain": [
+    "sequence_model"
+  ]
+}

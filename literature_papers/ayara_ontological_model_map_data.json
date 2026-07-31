@@ -1,0 +1,31 @@
+{
+  "basic_info": {
+    "title": "An Ontological Model for Map Data in Automotive Systems",
+    "authors": ["Yogita Suryawanshi", "Haonan Qiu", "Adel Ayara", "Birte Glimm"],
+    "venue": "IEEE AIKE 2019 — 2nd IEEE International Conference on Artificial Intelligence and Knowledge Engineering, Sardinia, Italy, June 3-5, 2019, pp. 140-147",
+    "year": 2019,
+    "link": "https://www.researchgate.net/publication/335074312",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "semantic_map_representation",
+    "input_representation": "HD_map / map_data_formats",
+    "sequence_model": "none",
+    "training_signal": "none (rule-based / logical inference)",
+    "graph_integration": "KG_RDF_semantics",
+    "semantic_enrichment": "KG_RDF",
+    "decision_paradigm": "symbolic_reasoning",
+    "notes": "Investigates the feasibility of using OWL/RDF ontologies to model and process digital map data inside cars, where map data is a key source for perceiving the environment for advanced driver-assistance functions. Earliest/foundational paper of this BMW-Ulm ontological-map lineage."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "This work realizes the semantic-enrichment idea (thesis pillar P1b) SYMBOLICALLY via hand-authored OWL/RDF ontologies for in-car map representation, not as learned, vectorized graph tokens for a transformer encoder. It does not address GPS map matching or path prediction as a learning task and uses no sequence model, no latent-space RL, and no label-free training on raw fleet trajectories.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_note": "A foundational symbolic/logical treatment of automotive map semantics that is orthogonal to the proposed learned-encoder + latent-RL + label-free-trajectory hybrid."
+  },
+  "relevance": {
+    "proximity": "background_inspiration",
+    "bmw_relevance": "HIGH — the earliest, most-cited BMW in-house ontological map-data paper co-authored by the thesis interview lead Adel Ayara (with Glimm, Ulm University / BMW Car IT), foundational to the classical view of the P1b semantic-enrichment pillar."
+  },
+  "uncertain": []
+}

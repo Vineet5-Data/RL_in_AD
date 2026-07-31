@@ -1,0 +1,29 @@
+{
+  "basic_info": {
+    "title": "RouteKG: A knowledge graph-based framework for route prediction on road networks",
+    "authors": "Yihong Tang, Zhan Zhao, Weipeng Deng, Shuyu Lei, Yuebing Liang, Zhenliang Ma",
+    "venue": "IEEE Transactions on Intelligent Transportation Systems, 2025 (vol. 26, issue 12, pp. 22277-22295); preprint arXiv:2310.03617 (2023)",
+    "link": "https://arxiv.org/abs/2310.03617",
+    "code_available": "https://github.com/YihongT/RouteKG"
+  },
+  "method": {
+    "task": "route_prediction",
+    "input_representation": "road_segment_sequence",
+    "sequence_model": "hybrid",
+    "training_signal": "supervised",
+    "graph_integration": "KG_RDF_semantics",
+    "semantic_enrichment": "KG_RDF",
+    "decision_paradigm": "one_shot_seq2seq"
+  },
+  "gap_analysis": {
+    "pillars_covered": ["semantic_vectorized_transformer_encoder"],
+    "whats_missing": "RouteKG injects road-network structure via a knowledge graph (reformulating route prediction as knowledge-graph completion that encodes spatial relations / moving directions), partially addressing the semantic-enrichment pillar, but it uses KG-completion-style scoring plus a sequence encoder rather than a transformer encoder over a vectorized graph. It has no RL agent and no latent-space sequential decision-making, and is trained supervised on observed routes rather than label-free on raw GPS.",
+    "novelty_vs_recombination": "partial_overlap",
+    "reasoning": "It instantiates structural/semantic enrichment of road networks (the semantic-enrichment pillar) via a KG, but the KG-completion + top-K route generation paradigm differs from a transformer encoder + latent-space RL map-matching agent, and it is not label-free."
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "Demonstrates that injecting road-network structural/semantic relations (directions, connectivity) via a knowledge graph improves prediction of where fleet vehicles will go, directly relevant to BMW Foresight fleet-trajectory analytics."
+  },
+  "uncertain": ["sequence_model_exact_cell_type"]
+}

@@ -1,0 +1,40 @@
+{
+  "basic_info": {
+    "title": "Hidden Markov Map Matching Through Noise and Sparseness",
+    "authors": [
+      "Paul Newson",
+      "John Krumm"
+    ],
+    "affiliation": "Microsoft Research",
+    "venue": {
+      "type": "conference",
+      "name": "17th ACM SIGSPATIAL International Conference on Advances in Geographic Information Systems (ACM SIGSPATIAL GIS 2009)",
+      "year": 2009,
+      "pages": "336-343",
+      "location": "Seattle, WA"
+    },
+    "link": "https://doi.org/10.1145/1653771.1653818",
+    "code_available": "no (no official author code; widely re-implemented, e.g. https://github.com/bmwcarit/offline-map-matching and https://github.com/julienperret/mapmatcher)"
+  },
+  "method": {
+    "task": "map_matching",
+    "input_representation": "raw_GPS_sequence",
+    "sequence_model": "HMM",
+    "training_signal": "unsupervised",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "probabilistic_HMM",
+    "notes": "HMM over GPS points: hidden states are candidate road segments near each GPS fix. Emission (measurement) probability is a zero-mean Gaussian on great-circle distance from GPS point to candidate segment; transition probability compares great-circle distance between consecutive GPS points to the road-network route distance between candidate segments (penalizing implausible routes). Most likely road sequence found by the Viterbi algorithm. No learned parameters beyond a couple of hand-tuned constants (GPS noise sigma, transition rate); robust to noisy/sparse and 'junk' points. Output is an ordered sequence of road segments (a route)."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Has none of the three hybrid pillars: no transformer / no neural encoder of a vectorized semantically-enriched graph, no learned latent space and no RL-based sequential decision-making (Viterbi is exact dynamic programming over a fixed probabilistic model), and although it needs no ground-truth labels it learns nothing from data at all (no representation learning, no exploitation of fleet mobility patterns). Uses only raw geometry and shortest-path route distances, with zero road-type/POI/RDF semantics.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_reasoning": "This is the canonical pre-deep-learning baseline; it is essentially orthogonal to the hybrid hypothesis and does not foreshadow a learned, semantic, latent-space RL approach, so the hybrid is genuinely unoccupied relative to this work. Its label-free nature is a hand-built probabilistic model rather than the label-free self-supervised/RL learning the thesis proposes."
+  },
+  "relevance": {
+    "proximity": "background_inspiration",
+    "bmw_relevance": "Foundational, BMW-relevant baseline: the bmwcarit team maintains an open-source HMM offline-map-matching implementation of exactly this algorithm, making it the natural classical comparator for any learned fleet-trajectory map-matcher in the Foresight project."
+  },
+  "uncertain": []
+}

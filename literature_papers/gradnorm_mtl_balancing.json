@@ -1,0 +1,42 @@
+{
+  "basic_info": {
+    "title": "GradNorm: Gradient Normalization for Adaptive Loss Balancing in Deep Multitask Networks",
+    "authors": [
+      "Zhao Chen",
+      "Vijay Badrinarayanan",
+      "Chen-Yu Lee",
+      "Andrew Rabinovich"
+    ],
+    "affiliation": "Magic Leap, Inc. (not fully confirmed from abstract page)",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Machine Learning (ICML 2018)",
+      "year": 2018
+    },
+    "link": "https://arxiv.org/abs/1711.02257",
+    "code_available": "not mentioned on abstract page"
+  },
+  "method": {
+    "task": "multi_task_loss_balancing",
+    "input_representation": "N/A",
+    "sequence_model": "N/A",
+    "training_signal": "supervised_multi_task_with_adaptive_weights",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Automatically re-weights per-task loss coefficients during training by equalizing the MAGNITUDE of each task's gradient at the shared representation layer, controlled by a single hyperparameter alpha (rather than requiring exhaustive manual grid search over static loss weights, which scales exponentially with task count). Directly applicable as a candidate fix for Stage-2's MDN-GPS-vs-RoadScorer competition: rather than fixed weights (lambda_mdn=1.0, lambda_road implicit at 1.0, lambda_prior_road=0.5, lambda_zonly_road=0.2), GradNorm-style dynamic re-weighting would automatically detect and counteract the GPS head's gradient dominance over the RoadScorer head as training proceeds -- directly targeting the newly observed hit@1-degrades-while-cl_gps-improves pattern."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or pillar-novelty paper -- included as a candidate Stage-2 loss-balancing mechanism.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Relevant only as a concrete, off-the-shelf mechanism to counteract gradient-magnitude imbalance between Stage-2's MDN GPS head and RoadScorer head, an alternative/complement to manually re-tuning lambda_prior_road or lambda_zonly_road by hand."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; flagged as a candidate mechanism if manual loss-weight tuning (the current approach for lambda_prior_road, lambda_zonly_road, road_keep_prob) proves too brittle across further Stage-2 experiments."
+  },
+  "uncertain": [
+    "Whether GradNorm's gradient-magnitude-equalization is compatible with Stage-2's KL-based ELBO training (which already has its own free-bits/balancing mechanism) without interaction effects was not analyzed -- would need careful combination, not a drop-in replacement for the existing KL balance."
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "basic_info": {
+    "title": "Gradient Surgery for Multi-Task Learning",
+    "authors": [
+      "Tianhe Yu",
+      "Saurabh Kumar",
+      "Abhishek Gupta",
+      "Sergey Levine",
+      "Karol Hausman",
+      "Chelsea Finn"
+    ],
+    "affiliation": "UC Berkeley / Stanford / Google Brain (consortium; not fully confirmed from abstract page)",
+    "venue": {
+      "type": "conference",
+      "name": "Neural Information Processing Systems (NeurIPS 2020)",
+      "year": 2020
+    },
+    "link": "https://arxiv.org/abs/2001.06782",
+    "code_available": "https://github.com/tianheyu927/PCGrad"
+  },
+  "method": {
+    "task": "multi_task_gradient_conflict_resolution",
+    "input_representation": "N/A",
+    "sequence_model": "N/A",
+    "training_signal": "supervised_or_RL_multi_task_with_gradient_projection",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Identifies three specific conditions of the multi-task optimization landscape that cause harmful gradient interference (conflicting gradient directions, large gradient-magnitude differences, high curvature). Proposes 'PCGrad' (Projecting Conflicting Gradients): when two tasks' gradients at a shared parameter have negative cosine similarity (i.e. genuinely conflict, not just differ in magnitude), project one task's gradient onto the normal plane of the other's, removing only the conflicting component while preserving the rest. Model-agnostic, combinable with any existing multi-task architecture. Directly applicable as a diagnostic+fix for Stage-2: if the MDN GPS head's and RoadScorer head's gradients at (h,z) are found to be genuinely conflicting (not just differing in scale), PCGrad would be a more surgical fix than GradNorm's magnitude-only rebalancing or Change 13's dropout/aux-loss patches."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or pillar-novelty paper -- included as a candidate Stage-2 gradient-conflict diagnostic/fix.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Relevant only as a concrete, off-the-shelf technique to test whether Stage-2's MDN-GPS-vs-RoadScorer competition is a genuine gradient-conflict problem (fixable via projection) vs. a magnitude-imbalance problem (fixable via GradNorm-style reweighting) vs. a KL/decoder-capacity problem (Change 13's actual target)."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; flagged as a cheap DIAGNOSTIC first (log the cosine similarity between the MDN GPS head's and RoadScorer head's gradients at (h,z) across training) before committing to any further architecture change -- distinguishes 'true conflict' from 'magnitude dominance' as the mechanism behind the hit@1-degrades-while-cl_gps-improves finding."
+  },
+  "uncertain": [
+    "Whether Stage-2's specific two-head setup exhibits genuine gradient conflict (vs. magnitude imbalance) has not been measured in this project -- PCGrad's applicability here is a testable hypothesis, not a confirmed fix."
+  ]
+}

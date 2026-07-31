@@ -1,0 +1,29 @@
+{
+  "basic_info": {
+    "title": "NetTraj: A Network-based Vehicle Trajectory Prediction Model with Directional Representation and Spatiotemporal Attention Mechanisms",
+    "authors": "Yuebing Liang, Zhan Zhao",
+    "venue": "IEEE Transactions on Intelligent Transportation Systems, 2022 (early access 2021); preprint arXiv:2106.11175 (2021)",
+    "link": "https://arxiv.org/abs/2106.11175",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "trajectory_prediction",
+    "input_representation": "road_segment_sequence",
+    "sequence_model": "hybrid",
+    "training_signal": "supervised",
+    "graph_integration": "graph_attention",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "one_shot_seq2seq"
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "NetTraj represents each trajectory as a sequence of intersections plus movement directions and feeds them to an LSTM encoder-decoder, with a local graph attention mechanism for network-level spatial dependencies and a temporal attention mechanism (sliding context window) for short/long-term temporal dependencies. It uses no transformer encoder over a vectorized graph, no RL / latent-space sequential decisions, no semantic (RDF/POI) enrichment, and is trained supervised.",
+    "novelty_vs_recombination": "real_gap",
+    "reasoning": "It captures road-network structure for trajectory prediction via LSTM + graph/temporal attention, but none of the three hybrid pillars (transformer semantic encoder, latent-space RL, label-free training) are present, so it is a structural baseline rather than an overlap."
+  },
+  "relevance": {
+    "proximity": "adjacent",
+    "bmw_relevance": "A strong network-aware baseline for predicting where fleet vehicles travel at city scale; useful as a comparison point and for its directional / graph-attention representation of road-network trajectories in BMW Foresight."
+  },
+  "uncertain": ["venue_exact_year"]
+}

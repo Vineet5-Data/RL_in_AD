@@ -1,0 +1,42 @@
+{
+  "basic_info": {
+    "title": "Mastering Atari with Discrete World Models (DreamerV2)",
+    "authors": [
+      "Danijar Hafner",
+      "Timothy Lillicrap",
+      "Mohammad Norouzi",
+      "Jimmy Ba"
+    ],
+    "affiliation": "Google Research / University of Toronto (Hafner; consortium not fully confirmed from abstract page)",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Learning Representations (ICLR 2021)",
+      "year": 2021
+    },
+    "link": "https://arxiv.org/abs/2010.02193",
+    "code_available": "danijar.com/dreamerv2 (website referenced; repo not confirmed from abstract page)"
+  },
+  "method": {
+    "task": "model_based_RL",
+    "input_representation": "pixel_observations",
+    "sequence_model": "RSSM_GRU_plus_categorical_latents",
+    "training_signal": "RL_reward_plus_ELBO_world_model",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "sequential_decision_RL_in_imagined_rollouts",
+    "notes": "Introduces the RSSM with CATEGORICAL (not Gaussian) stochastic latents and straight-through gradients, trained purely from imagined latent rollouts, achieving human-level performance on 55 Atari games. Introduces KL BALANCING: instead of a single symmetric KL term, the loss is split into a 'dynamics loss' (prior trained to match a stop-gradiented posterior) and a 'representation loss' (posterior trained to match a stop-gradiented prior), weighted asymmetrically (dynamics weighted higher than representation in V2's ablations) so the prior is pushed to track the posterior more strongly than the reverse -- this deliberately makes it cheap for the posterior to carry information and expensive for the prior to stay ignorant, directly relevant to why a purely SYMMETRIC free-bits floor (as used in Stage-2 Runs 1/2') can leave collapse unaddressed. Also introduces the KL free-bits floor (clip below ~1 nat, no gradient) used verbatim in Stage-2's Change 1/11."
+  },
+  "gap_analysis": {
+    "pillars_covered": ["P2 (inspires only; wrong domain)"],
+    "whats_missing": "Model-based RL for Atari pixel control, not GPS map matching. Confirms P2 (latent-world-model RL) architecture exists and is the source of the RSSM formula reused in Stage 2, but never touches road graphs, GPS, or map matching.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_reasoning": "Same class as Think2Drive -- architectural inspiration for P2, wrong domain entirely; does not pre-empt the thesis's GPS map-matching application."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Primary architectural source for Stage 2's RSSM (GRU + categorical latents, KL balancing, free bits) and the direct precedent for diagnosing why Stage 2's SYMMETRIC KL treatment (Runs 1/2') failed to prevent posterior collapse -- V2's asymmetric dynamics/representation split was not yet tried in this project."
+  },
+  "uncertain": [
+    "Exact numeric KL-balance weights used in DreamerV2 specifically (vs. DreamerV3's 0.5/0.1) were not confirmed from the abstract page; DreamerV3's paper (see dreamerv3_diverse_domains.json) is the more precise numeric source already used in this project's Change 1."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "basic_info": {
+    "title": "Ontology-Based Map Data Quality Assurance",
+    "authors": ["Haonan Qiu", "Adel Ayara", "Birte Glimm"],
+    "venue": "ESWC 2021 — The Semantic Web: 18th International Conference (Extended Semantic Web Conference), Virtual Event, June 6-10, 2021. Springer, Lecture Notes in Computer Science, vol. 12731, chapter 5",
+    "year": 2021,
+    "link": "https://doi.org/10.1007/978-3-030-77385-4_5",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "map_data_quality_assurance",
+    "input_representation": "HD_map / map_data_formats",
+    "sequence_model": "none",
+    "training_signal": "none (rule-based / logical inference)",
+    "graph_integration": "KG_RDF_semantics",
+    "semantic_enrichment": "KG_RDF",
+    "decision_paradigm": "symbolic_reasoning",
+    "notes": "Proposes an ontology-based (OWL/RDF) workflow for HD map data quality assurance with three stages: semantic enrichment of map data, logical violation (constraint) detection via reasoning, and on-the-fly (on-board, in-car) violation handling. Evaluation indicates the approach can successfully check map data quality and that violation handling is feasible on-the-fly in the vehicle."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "This work realizes the semantic-enrichment idea (thesis pillar P1b) SYMBOLICALLY through hand-authored OWL/RDF ontologies and logical reasoning rather than as learned, vectorized graph tokens consumed by a transformer. It targets map-data quality checking, not GPS map matching or path prediction, and contains no learned sequence model, no RL agent, and no label-free training on raw fleet trajectories.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_note": "It is a genuinely distinct (symbolic/logical) approach to map semantics, leaving the learned-vectorized-encoder + latent-RL + label-free-trajectory hybrid entirely unaddressed."
+  },
+  "relevance": {
+    "proximity": "adjacent",
+    "bmw_relevance": "HIGH — a BMW in-house semantic-map quality-assurance approach co-authored by the thesis interview lead Adel Ayara (with Glimm, Ulm University / BMW Car IT), directly informing the classical counterpart of the P1b semantic-enrichment pillar."
+  },
+  "uncertain": []
+}

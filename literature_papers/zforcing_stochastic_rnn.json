@@ -1,0 +1,43 @@
+{
+  "basic_info": {
+    "title": "Z-Forcing: Training Stochastic Recurrent Networks",
+    "authors": [
+      "Anirudh Goyal",
+      "Alessandro Sordoni",
+      "Marc-Alexandre Cote",
+      "Nan Rosemary Ke",
+      "Yoshua Bengio"
+    ],
+    "affiliation": "MILA / Microsoft Research Montreal (consortium; not fully confirmed from abstract page)",
+    "venue": {
+      "type": "conference",
+      "name": "Neural Information Processing Systems (NeurIPS 2017)",
+      "year": 2017
+    },
+    "link": "https://arxiv.org/abs/1711.05411",
+    "code_available": "https://github.com/anirudh9119/zforcing_nips17"
+  },
+  "method": {
+    "task": "stochastic_sequence_model_training",
+    "input_representation": "sequence",
+    "sequence_model": "stochastic_RNN_with_latent_variables",
+    "training_signal": "amortized_variational_inference_plus_auxiliary_loss",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Combines amortized variational inference with a backward RNN that runs over the sequence in reverse to produce a target the latent variables must reconstruct. The key contribution ('Z-Forcing') is an AUXILIARY loss -- independent of the task loss and independent of the KL term -- that forces the latent z_t to reconstruct the backward-RNN's hidden state at that timestep. Because this target is only computable from real observations (never available for free from the deterministic forward path alone), it creates training pressure that a teacher-forced auxiliary channel cannot satisfy on its own, directly countering posterior collapse. Reported to outperform KL annealing alone on TIMIT, Blizzard, sequential MNIST, and language modeling. This is the direct precedent for Stage-2's Change 13B (z-only auxiliary road CE loss, where h is zeroed out of the RoadScorer query so the loss is only reducible if z itself carries road-relevant information)."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or pillar-novelty paper -- included as a Stage-2 RSSM training-methodology precedent. Domain is generic stochastic sequence modeling (speech/text/pixel sequences), not road-graph world models.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Relevant only as the origin of the 'auxiliary loss forcing z to predict something only observations can supply' mechanism (Change 13B's z-only road CE) used to diagnose/fix Stage-2's posterior collapse."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; cited only as the literature origin of the z-only auxiliary loss mechanism applied to Stage-2's RSSM RoadScorer head (see stage2_correction.md Change 13B)."
+  },
+  "uncertain": [
+    "Exact architecture of the backward RNN and auxiliary-loss weighting were not confirmed beyond the abstract-page summary."
+  ]
+}

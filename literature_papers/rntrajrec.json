@@ -1,0 +1,29 @@
+{
+  "basic_info": {
+    "title": "RNTrajRec: Road Network Enhanced Trajectory Recovery with Spatial-Temporal Transformer",
+    "authors": "Yuqi Chen, Hanyuan Zhang, Weiwei Sun, Baihua Zheng",
+    "venue": "IEEE ICDE 2023 (39th International Conference on Data Engineering), pp. 829-842",
+    "link": "https://arxiv.org/abs/2211.13234",
+    "code_available": "https://github.com/chenyuqi990215/RNTrajRec"
+  },
+  "method": {
+    "task": "trajectory_recovery",
+    "input_representation": "sub_graph",
+    "sequence_model": "hybrid",
+    "training_signal": "supervised",
+    "graph_integration": "sub_graph",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "one_shot_seq2seq"
+  },
+  "gap_analysis": {
+    "pillars_covered": ["semantic_vectorized_transformer_encoder"],
+    "whats_missing": "RNTrajRec is supervised: it requires map-matched trajectories (sampled at 10-15s) as ground truth to train the recovery decoder, so it does not satisfy label-free training. There is no RL component; recovery is a one-shot seq2seq decode over the transformer encoding rather than a sequential decision agent acting in latent space. Its graph integration is structural/spatial (GAT over grid-partitioned road sub-graphs), not RDF/KG semantic enrichment.",
+    "novelty_vs_recombination": "partial_overlap",
+    "reasoning": "It is the closest neighbor on the transformer-plus-graph axis (GPSFormer spatial-temporal transformer over per-point road sub-graphs via GridGNN/GAT), but it is supervised and has no latent-space RL, leaving two of the three pillars open."
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "Directly relevant to fleet GPS analytics: recovers high-resolution map-aligned trajectories from low-sample-rate GPS, the exact preprocessing/enrichment problem in Foresight fleet-trajectory pipelines."
+  },
+  "uncertain": []
+}

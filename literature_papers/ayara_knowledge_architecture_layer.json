@@ -1,0 +1,30 @@
+{
+  "basic_info": {
+    "title": "A Knowledge Architecture Layer for Map Data in Autonomous Vehicles",
+    "authors": ["Haonan Qiu", "Adel Ayara", "Birte Glimm"],
+    "venue": "2020 23rd IEEE International Conference on Intelligent Transportation Systems (ITSC), Rhodes, Greece, September 2020 (IEEE). Affiliations: BMW Car IT GmbH / Institute of Artificial Intelligence, University of Ulm.",
+    "year": 2020,
+    "link": "https://ieeexplore.ieee.org/document/9294712/",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "semantic_map_representation",
+    "input_representation": "HD_map / map_data_formats / road_environment_model (per-format low-level ontologies abstracted into a generic high-level road-environment ontology)",
+    "sequence_model": "none",
+    "training_signal": "none (rule-based / logical inference)",
+    "graph_integration": "KG_RDF_semantics (OWL ontologies, RDF triples)",
+    "semantic_enrichment": "KG_RDF",
+    "decision_paradigm": "symbolic_reasoning",
+    "notes": "Two-tier knowledge architecture: format-specific low-level ontologies (e.g., NDS, HERE) feed a generic high-level road-environment ontology via rules. Adequacy validated on two use cases - lane-change notification and logical-inconsistency detection over real map data."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Realizes the P1b semantic-enrichment idea SYMBOLICALLY via OWL/RDF ontologies and rule-based reasoning rather than as learned, vectorized graph tokens fed to a transformer. It models and reasons over the road environment but does not address GPS map matching or path prediction as a learning task, has no sequence model, and performs no label-free (or any) training.",
+    "novelty_vs_recombination": "real_gap: orthogonal symbolic-vs-learned paradigm and a BMW in-house precedent for semantic road-environment representation, not a foreshadowing of the proposed learned transformer+RL hybrid."
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "HIGH - this is BMW's in-house semantic-map (knowledge architecture layer) approach, authored by the thesis interview lead Adel Ayara with Birte Glimm, defining BMW's symbolic road-environment representation."
+  },
+  "uncertain": []
+}

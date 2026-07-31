@@ -1,0 +1,29 @@
+{
+  "basic_info": {
+    "title": "MTrajRec: Map-Constrained Trajectory Recovery via Seq2Seq Multi-task Learning",
+    "authors": ["Huimin Ren", "Sijie Ruan", "Yanhua Li", "Jie Bao", "Chuishi Meng", "Ruiyuan Li", "Yu Zheng"],
+    "venue": "ACM SIGKDD Conference on Knowledge Discovery & Data Mining (KDD) 2021, pp. 1410-1419",
+    "link": "https://doi.org/10.1145/3447548.3467238",
+    "code_available": "https://github.com/huiminren/MTrajRec"
+  },
+  "method": {
+    "task": "trajectory_recovery",
+    "input_representation": "raw_GPS_sequence",
+    "sequence_model": "RNN_GRU",
+    "training_signal": "supervised",
+    "graph_integration": "[uncertain]",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "one_shot_seq2seq",
+    "critic_note": "graph_integration downgraded to [uncertain] by critic-anti-drift (likely 'none'): RNTrajRec (ICDE'23) explicitly contrasts itself against prior recovery/matching work that 'ignore the topology of road network and only use grid information or raw GPS points' — which describes MTrajRec. Its encoder is GRU seq2seq + attention with a constraint-mask output layer, not a GNN road embedding."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "MTrajRec recovers fine-grained map-matched trajectories end-to-end with a GRU seq2seq encoder-decoder and a multi-task head that jointly predicts the road segment (classification) and the moving ratio (regression) under map constraints, but it uses an RNN rather than a transformer over a vectorized semantic graph, makes one-shot seq2seq predictions rather than RL decisions in a latent space, and is trained supervised on high-sampling-rate ground-truth trajectories rather than label-free on raw fleet GPS. No RDF/KG semantics are used.",
+    "novelty_vs_recombination": "real_gap"
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "Recovering dense, road-constrained trajectories from sparse/low-quality fleet GPS is highly relevant to BMW fleet analytics, but the supervised, RNN-based, label-dependent design diverges from the thesis's label-free transformer+latent-RL hybrid."
+  },
+  "uncertain": ["graph_integration"]
+}

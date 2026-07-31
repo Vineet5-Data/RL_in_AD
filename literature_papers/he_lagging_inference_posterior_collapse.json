@@ -1,0 +1,42 @@
+{
+  "basic_info": {
+    "title": "Lagging Inference Networks and Posterior Collapse in Variational Autoencoders",
+    "authors": [
+      "Junxian He",
+      "Daniel Spokoyny",
+      "Graham Neubig",
+      "Taylor Berg-Kirkpatrick"
+    ],
+    "affiliation": "Carnegie Mellon University / UC San Diego (consortium; not fully confirmed from abstract page)",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Learning Representations (ICLR 2019)",
+      "year": 2019
+    },
+    "link": "https://arxiv.org/abs/1901.05534",
+    "code_available": "not mentioned on abstract page"
+  },
+  "method": {
+    "task": "VAE_training_schedule",
+    "input_representation": "sequence_or_image",
+    "sequence_model": "VAE_generic",
+    "training_signal": "variational_inference_with_modified_schedule",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Diagnoses posterior collapse as, in part, an OPTIMIZATION-SCHEDULE problem: early in training the inference network (posterior/encoder) lags behind the true (evolving) posterior implied by the decoder, so the decoder learns to ignore the latent before the encoder catches up, and the model then gets stuck in that local optimum. Fix ('aggressive inference-network training'): before each single decoder/generator update, run several extra optimization steps on ONLY the inference network (based on current mutual information between latent and observation), without adding any new model components, auxiliary losses, or architecture changes. Reported faster and simpler than KL annealing / free bits / auxiliary losses, while matching or beating them on text and image benchmarks. This is the specific 'training-schedule-only' escalation path (already flagged in stage2_correction.md as an untried lever alongside Change 13) distinct in mechanism from both channel-dropout (Bowman) and auxiliary-loss (Z-Forcing) fixes -- it targets WHEN the posterior is trained relative to the decoder, not WHAT the posterior is trained against."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or pillar-novelty paper -- included as a Stage-2 training-methodology precedent (next untried escalation step if Change 13 fails).",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Relevant only as the source of the 'aggressive posterior pretraining / lagging inference network' escalation path for Stage-2 if Change 13 (dropout + z-only aux loss) proves insufficient."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; cited as the next concrete, cheap (schedule-only, no architecture change) lever to try for Stage 2's posterior collapse if Change 13's ambiguous results (marginal Gate A\" pass, Gate D\" fail, hit@1 degrading with training) do not resolve after tuning road_keep_prob."
+  },
+  "uncertain": [
+    "Exact number of extra inference-network sub-steps per decoder update, and the precise mutual-information-based stopping criterion, were not confirmed from the abstract page alone -- would need the full paper before implementation."
+  ]
+}

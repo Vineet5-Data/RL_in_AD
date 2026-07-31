@@ -1,0 +1,29 @@
+{
+  "basic_info": {
+    "title": "Trembr: Exploring Road Networks for Trajectory Representation Learning",
+    "authors": "Tao-Yang Fu, Wang-Chien Lee",
+    "venue": "ACM Transactions on Intelligent Systems and Technology (TIST) 2020, Vol. 11, Issue 1, Article 10",
+    "link": "https://dl.acm.org/doi/10.1145/3361741",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "representation_learning",
+    "input_representation": "road_segment_sequence",
+    "sequence_model": "RNN_GRU",
+    "training_signal": "self_supervised",
+    "graph_integration": "none",
+    "semantic_enrichment": "traffic_semantics",
+    "decision_paradigm": "one_shot_seq2seq"
+  },
+  "gap_analysis": {
+    "pillars_covered": ["label_free_training"],
+    "whats_missing": "Trembr uses an RNN (not a transformer) encoder-decoder and has no graph neural network: Road2Vec learns road-segment embeddings from network topology in a word2vec-style manner rather than via a GNN, so the semantic_vectorized_transformer_encoder pillar is unmet. There is no RL agent and no latent-space decision-making.",
+    "novelty_vs_recombination": "partial_overlap",
+    "reasoning": "An early self-supervised reconstruction approach (Traj2Vec RNN encoder-decoder reconstructing road sequences plus travel time, with Road2Vec embeddings injecting road-type/traffic features); it is label-free but pre-transformer and pre-RL, covering only one pillar."
+  },
+  "relevance": {
+    "proximity": "background_inspiration",
+    "bmw_relevance": "Foundational reference showing road-network-constrained, label-free trajectory embeddings; predates transformer/RL methods so mainly historical/motivational for the thesis."
+  },
+  "uncertain": []
+}

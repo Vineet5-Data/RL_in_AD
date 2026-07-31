@@ -1,0 +1,30 @@
+{
+  "paper_id": "P11",
+  "basic_info": {
+    "title": "VectorNet: Encoding HD Maps and Agent Dynamics from Vectorized Representation",
+    "authors": "Jiyang Gao, Chen Sun, Hang Zhao, Yi Shen, Dragomir Anguelov, Congcong Li, Cordelia Schmid (Waymo / Google)",
+    "venue": "CVPR 2020",
+    "link": "https://arxiv.org/abs/2005.04259",
+    "code_available": "no (no official Waymo release; unofficial third-party implementations exist, e.g. https://github.com/Liang-ZX/VectorNet)"
+  },
+  "method": {
+    "task": ["motion_forecasting", "trajectory_prediction", "representation_learning"],
+    "input_representation": "vectorized_graph",
+    "sequence_model": "GNN",
+    "training_signal": "supervised",
+    "graph_integration": "sub_graph",
+    "semantic_enrichment": "road_type_and_POI_features",
+    "decision_paradigm": "one_shot_seq2seq"
+  },
+  "gap_analysis": {
+    "pillars_covered": ["semantic_vectorized_transformer_encoder (INSPIRES ONLY)"],
+    "whats_missing": "VectorNet inspires the vectorized graph encoder pillar via its hierarchical polyline sub-graph + global interaction GNN and its masked node-completion self-supervised auxiliary task, but it is a motion-forecasting model for HD-map + agent dynamics, not a GPS map-matching method. It operates on annotated HD-map polylines and tracked agent trajectories (Argoverse / Waymo data), never on raw fleet GPS, and performs no road-segment assignment.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_vs_recombination_note": "A real gap exists: the vectorized hierarchical graph idea has not been applied to label-free GPS-to-road map matching."
+  },
+  "relevance": {
+    "proximity": "background_inspiration",
+    "bmw_relevance": "Architectural inspiration only for the vectorized graph encoder; it addresses AD motion forecasting on HD maps, not BMW fleet GPS analytics or map matching."
+  },
+  "uncertain": []
+}

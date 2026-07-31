@@ -1,0 +1,44 @@
+{
+  "basic_info": {
+    "title": "Generating Sentences from a Continuous Space",
+    "authors": [
+      "Samuel R. Bowman",
+      "Luke Vilnis",
+      "Oriol Vinyals",
+      "Andrew M. Dai",
+      "Rafal Jozefowicz",
+      "Samy Bengio"
+    ],
+    "affiliation": "Google, Inc.",
+    "venue": {
+      "type": "conference",
+      "name": "SIGNLL Conference on Computational Natural Language Learning (CoNLL 2016)",
+      "year": 2016
+    },
+    "link": "https://arxiv.org/abs/1511.06349",
+    "code_available": "not stated on abstract page; widely re-implemented (unofficial)"
+  },
+  "method": {
+    "task": "sequence_VAE_training",
+    "input_representation": "token_sequence",
+    "sequence_model": "RNN_encoder_decoder_VAE",
+    "training_signal": "unsupervised_ELBO",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "First RNN-VAE for text; identifies that a sufficiently powerful autoregressive decoder (predicting the next token from ALL previous ground-truth tokens) lets the model ignore the latent code entirely -- posterior collapses to the prior. Proposes two mitigations, used together: (1) KL-cost annealing -- ramp the KL weight from 0 to 1 over training so early optimization is forced to use the latent before the penalty bites; (2) 'word dropout' / 'history-less decoding' -- replace a random fraction of the decoder's teacher-forced previous-token inputs with a generic UNK token, weakening the decoder's autoregressive channel so it must lean on the latent code to fill the gap. This is the origin precedent for 'weaken the free deterministic channel so the KL-penalized latent is forced to carry information' -- structurally the same fix class as dropping out a teacher-forced auxiliary input (e.g. road_embed) into an RSSM's deterministic path."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or pillar-novelty paper -- included as a Stage-2 RSSM training-methodology precedent, not a thesis-novelty comparator. Domain is text VAEs, not road-graph world models.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Relevant only as the origin of the 'teacher-forced-channel dropout' mechanism (Change 13's road-embedding dropout) used to diagnose/fix Stage-2's posterior collapse."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; cited only as the literature origin of the road-embedding-dropout mechanism applied to Stage-2's RSSM to counter posterior collapse (see stage2_correction.md Change 13)."
+  },
+  "uncertain": [
+    "Exact KL-annealing schedule and word-dropout rate used in the original paper were not confirmed from the abstract page alone."
+  ]
+}

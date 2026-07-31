@@ -1,0 +1,40 @@
+{
+  "basic_info": {
+    "title": "MuDreamer: Learning Predictive World Models without Reconstruction",
+    "authors": [
+      "Maxime Burchi",
+      "Radu Timofte"
+    ],
+    "affiliation": "Not confirmed from abstract page",
+    "venue": {
+      "type": "preprint",
+      "name": "arXiv preprint (submitted 2024-05-23)",
+      "year": 2024
+    },
+    "link": "https://arxiv.org/abs/2405.15083",
+    "code_available": "not mentioned on abstract page"
+  },
+  "method": {
+    "task": "model_based_RL",
+    "input_representation": "pixel_observations",
+    "sequence_model": "RSSM_without_reconstruction_decoder",
+    "training_signal": "RL_reward_plus_action_and_value_prediction_only",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "sequential_decision_RL_in_imagined_rollouts",
+    "notes": "Directly modifies DreamerV3 by removing pixel-reconstruction losses entirely, instead training representations by predicting the environment's VALUE FUNCTION and previously-selected ACTIONS. States that removing reconstruction improves robustness to visual distractions (task-irrelevant input the decoder would otherwise be forced to model) and speeds up training, while identifying batch normalization as necessary to prevent a DIFFERENT training collapse once reconstruction is removed. This is the closest same-lineage (explicit DreamerV3 successor) confirmation that a powerful reconstruction decoder is itself a source of representation problems, directly supporting the 'extend z-only isolation from RoadScorer to the MDN GPS head too' idea raised as the next Stage-2 experiment."
+  },
+  "gap_analysis": {
+    "pillars_covered": ["P2 (inspires only; wrong domain)"],
+    "whats_missing": "General RL benchmark paper (Atari/DMC-style), not GPS map matching. Confirms the reconstruction-free design pattern within the Dreamer lineage specifically, but never touches road graphs or GPS.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_reasoning": "Same class as TD-MPC2/Think2Drive -- architectural inspiration, wrong domain; does not pre-empt the thesis's GPS map-matching application."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; the single most directly applicable precedent for the recommended next Stage-2 experiment -- since MuDreamer is a DreamerV3 successor (same lineage as this project's RSSM) that resolves decoder-vs-latent competition by removing/de-weighting reconstruction, this supports extending Change 13's z-only isolation trick from the RoadScorer head to the MDN GPS decode head as well, rather than inventing a new mechanism."
+  },
+  "uncertain": [
+    "Whether MuDreamer's batch-normalization requirement (needed to prevent a new collapse mode once reconstruction is removed) would also apply to Stage-2's GRU+categorical-latent setup was not verified -- flagged as an implementation risk if this direction is pursued."
+  ]
+}

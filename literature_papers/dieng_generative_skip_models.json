@@ -1,0 +1,42 @@
+{
+  "basic_info": {
+    "title": "Avoiding Latent Variable Collapse With Generative Skip Models",
+    "authors": [
+      "Adji B. Dieng",
+      "Yoon Kim",
+      "Alexander M. Rush",
+      "David M. Blei"
+    ],
+    "affiliation": "Columbia University / Harvard University (consortium; not fully confirmed from abstract page)",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Artificial Intelligence and Statistics (AISTATS 2019)",
+      "year": 2019
+    },
+    "link": "https://arxiv.org/abs/1807.04863",
+    "code_available": "not mentioned on abstract page"
+  },
+  "method": {
+    "task": "VAE_architecture",
+    "input_representation": "sequence_or_image",
+    "sequence_model": "VAE_with_skip_connections",
+    "training_signal": "variational_inference",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Proposes adding SKIP CONNECTIONS from the latent variable directly to the likelihood/decoder at every generation step (not just at the start), strengthening the statistical dependency between latent code and every output token/pixel. Proven (theoretically, via an information-theoretic argument) to increase mutual information between observations and the inferred latent, reducing collapse, while preserving predictive performance. Directly relevant to Stage-2's own architecture: the 'Heads reads (h, z) jointly, not h alone' design already implements this skip-connection idea at every timestep -- and this paper's own caveat (skip connections alone are insufficient under a sufficiently strong competing decoder input) is consistent with why Stage 2's existing (h,z)-joint heads did NOT prevent collapse once road_embed gave h a free deterministic channel. This paper rules out 'give heads more access to z' as a further fix -- that access already exists structurally; the redundancy is the problem, not reachability."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or pillar-novelty paper -- included as a Stage-2 architecture precedent, confirming what is already correctly implemented and why it alone is insufficient.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Relevant only to confirm Stage-2's existing (h,z)-joint decoder heads already implement this paper's fix, and that its own literature caveats explain why it did not, by itself, prevent posterior collapse once a competing deterministic channel (road_embed) was introduced."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; cited as confirmation that Stage 2's architecture already satisfies this paper's recommended fix (skip/joint access to z), which rules out 'give heads more access to z' as a viable NEW lever and points fixes toward weakening h's competing input (Change 13A) or forcing z to solve something h cannot (Change 13B) instead."
+  },
+  "uncertain": [
+    "Whether Stage-2's specific (h,z) concatenation into each head exactly matches this paper's proposed skip-connection topology (vs. a superficially similar but mechanistically different design) was not independently verified beyond the analogy noted in stage2_correction.md."
+  ]
+}

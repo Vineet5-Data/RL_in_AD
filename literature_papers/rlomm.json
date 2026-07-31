@@ -1,0 +1,39 @@
+{
+  "basic_info": {
+    "title": "RLOMM: An Efficient and Robust Online Map Matching Framework with Reinforcement Learning",
+    "authors": [
+      "Minxiao Chen",
+      "Haitao Yuan",
+      "Nan Jiang",
+      "Zhihan Zheng",
+      "Sai Wu",
+      "Ao Zhou",
+      "Shangguang Wang"
+    ],
+    "venue": "Proceedings of the ACM on Management of Data (PACMMOD), Vol. 3, No. 3 (SIGMOD), Article 209, June 2025; preprint arXiv:2502.06825 (accepted by SIGMOD 2025)",
+    "link": "https://arxiv.org/abs/2502.06825 ; https://doi.org/10.1145/3725346",
+    "code_available": "[uncertain]"
+  },
+  "method": {
+    "task": "map_matching",
+    "input_representation": "raw_GPS_sequence",
+    "sequence_model": "hybrid",
+    "training_signal": "RL_reward",
+    "graph_integration": "GNN_road_embedding",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "sequential_decision_RL"
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "RLOMM casts ONLINE map matching as an Online Markov Decision Process solved with RL, but its policy selects among candidate road segments using a comprehensive, hand-designed reward function (distance/transition/future-oriented terms) rather than acting inside a learned latent world model. It uses GNN + recurrent (RNN) encoders for road and trajectory plus contrastive learning to align them in latent space, but the RL decisions are over explicit candidate-segment states, not over a transformer-encoded latent representation; it relies on ground-truth matched paths for training/evaluation rather than being label-free; and it has no RDF/KG semantic enrichment or a transformer encoder.",
+    "novelty_vs_recombination": "partial_overlap",
+    "novelty_reasoning": "It shares the sequential-decision-RL framing and trajectory-road latent alignment of the thesis, but uses GNN+RNN (not a semantic transformer), a hand-crafted reward over explicit candidates (not latent-world-model RL), and supervised ground-truth matches, so none of the three pillars is fully covered."
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "Most direct precedent for treating fleet-GPS map matching as a sequential RL decision process at scale, making it the closest baseline on the RL axis for BMW Foresight fleet-trajectory analytics, though it is online and supervised rather than offline latent-world-model and label-free."
+  },
+  "uncertain": [
+    "code_available"
+  ]
+}

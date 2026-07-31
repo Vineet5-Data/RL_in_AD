@@ -1,0 +1,41 @@
+{
+  "basic_info": {
+    "title": "The Usual Suspects? Reassessing Blame for VAE Posterior Collapse",
+    "authors": [
+      "Bin Dai",
+      "Ziyu Wang",
+      "David Wipf"
+    ],
+    "affiliation": "Not confirmed from abstract page",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Machine Learning (ICML 2020)",
+      "year": 2020
+    },
+    "link": "https://arxiv.org/abs/1912.10702",
+    "code_available": "not mentioned on abstract page"
+  },
+  "method": {
+    "task": "VAE_theory",
+    "input_representation": "N/A",
+    "sequence_model": "N/A",
+    "training_signal": "N/A",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Challenges the conventional wisdom that posterior collapse is caused primarily by KL-divergence regularization pressure. Proves that even with Gaussian VAEs whose GLOBAL optima are aligned with the true data distribution, collapse still occurs in practice because of BAD LOCAL MINIMA inherent to the loss surface of deep decoder networks -- minor nonlinear modifications to an otherwise-affine decoder are sufficient to create such minima, and deeper/more expressive decoders can make the model behave as an aggressive information-truncation operator regardless of KL weighting. Important caution for Stage-2 diagnosis: dropout/auxiliary-loss patches (Change 13) may reduce but not fully eliminate collapse if the competing reconstruction heads (MDN GPS head, RoadScorer) remain flexible enough to fit the deterministic path (h) alone -- the fix may need to also constrain decoder capacity/local-minima structure, not just re-balance KL or dropout the auxiliary channel."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Pure VAE theory paper, not map matching or RL. Included as a Stage-2 diagnostic caution, not a novelty comparator.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Relevant only as a caution that Stage-2's collapse may have a decoder-loss-surface component beyond what KL-balance or channel-dropout fixes (Changes 1/11/13) can fully resolve."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Not directly BMW-relevant; cited as a caution when interpreting Change 13's ambiguous results (marginal gap widening, hit@1 degrading with training) -- these symptoms are consistent with a loss-surface/local-minima component that channel-weakening alone won't fully fix."
+  },
+  "uncertain": [
+    "Exact mathematical conditions under which the 'aggressive truncation' behavior applies to Stage-2's specific decoder heads (MDN + RoadScorer) were not derived -- this paper's applicability here is analogical, not a proven match."
+  ]
+}

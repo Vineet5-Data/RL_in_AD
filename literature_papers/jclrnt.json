@@ -1,0 +1,29 @@
+{
+  "basic_info": {
+    "title": "Jointly Contrastive Representation Learning on Road Network and Trajectory (JCLRNT)",
+    "authors": "Zhenyu Mao, Ziyue Li, Dedong Li, Lei Bai, Rui Zhao",
+    "venue": "ACM CIKM 2022 (31st ACM International Conference on Information & Knowledge Management)",
+    "link": "https://arxiv.org/abs/2209.06389",
+    "code_available": "https://github.com/mzy94/JCLRNT"
+  },
+  "method": {
+    "task": "representation_learning",
+    "input_representation": "road_segment_sequence",
+    "sequence_model": "hybrid",
+    "training_signal": "contrastive",
+    "graph_integration": "graph_attention",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "one_shot_seq2seq"
+  },
+  "gap_analysis": {
+    "pillars_covered": ["semantic_vectorized_transformer_encoder", "label_free_training"],
+    "whats_missing": "JCLRNT is purely a representation-learning framework with no map-matching or decision step, so the latent_space_RL_decisions pillar is absent. Its graph component is a GAT over road topology with contrastive objectives; there is no RDF/KG semantic enrichment of nodes/edges.",
+    "novelty_vs_recombination": "partial_overlap",
+    "reasoning": "It combines a GAT road encoder with a Transformer trajectory encoder under three contrastive objectives (road-road, trajectory-trajectory, road-trajectory), covering the transformer+graph and label-free axes but with no sequential RL decision-making."
+  },
+  "relevance": {
+    "proximity": "adjacent",
+    "bmw_relevance": "Provides a joint road+trajectory contrastive pretraining recipe usable for unsupervised embedding of fleet data; less directly about map-matching than recovery papers."
+  },
+  "uncertain": []
+}

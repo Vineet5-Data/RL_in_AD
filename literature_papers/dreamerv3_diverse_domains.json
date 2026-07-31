@@ -1,0 +1,42 @@
+{
+  "basic_info": {
+    "title": "Mastering Diverse Domains through World Models (DreamerV3)",
+    "authors": [
+      "Danijar Hafner",
+      "Jurgis Pasukonis",
+      "Jimmy Ba",
+      "Timothy Lillicrap"
+    ],
+    "affiliation": "Google DeepMind (Hafner et al.; not fully confirmed from abstract page)",
+    "venue": {
+      "type": "preprint",
+      "name": "arXiv preprint (submitted 2023-01-10, revised 2024-04-17)",
+      "year": 2023
+    },
+    "link": "https://arxiv.org/abs/2301.04104",
+    "code_available": "danijar.com/dreamerv3 (website referenced)"
+  },
+  "method": {
+    "task": "model_based_RL",
+    "input_representation": "pixel_or_proprioceptive_observations",
+    "sequence_model": "RSSM_GRU_plus_categorical_latents",
+    "training_signal": "RL_reward_plus_ELBO_world_model",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "sequential_decision_RL_in_imagined_rollouts",
+    "notes": "Single fixed hyperparameter configuration working across 150+ tasks (Atari, DMC, Minecraft diamond collection from scratch, etc). This project's Stage 2 directly reuses DreamerV3's documented mechanisms: (1) KL free bits at 1 nat per term, (2) KL balancing L_kl = 0.5*max(1,KL_dyn) + 0.1*max(1,KL_rep) (dynamics loss weighted 5x the representation loss), (3) 1% unimix (uniform mixture floor) on both prior and posterior categorical distributions to prevent any single class from fully saturating, (4) 32 categoricals x 32 classes as the UNIVERSAL default latent size at every model scale from XS to XL (this project's 16x16 was a deliberate down-scale for compute reasons), (5) symlog + MSE for continuous observation reconstruction (not two-hot, which DreamerV3 reserves for reward/value heads only -- this project correctly followed that distinction when rejecting a two-hot GPS head)."
+  },
+  "gap_analysis": {
+    "pillars_covered": ["P2 (inspires only; wrong domain)"],
+    "whats_missing": "General-purpose model-based RL benchmark paper, not GPS map matching. Confirms P2's RSSM formula but never touches road graphs or GPS trajectories.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_reasoning": "Same class as Think2Drive/DreamerV2 -- architectural inspiration for P2, wrong domain; does not pre-empt the thesis's GPS map-matching application."
+  },
+  "relevance": {
+    "proximity": "stage2_training_methodology_precedent",
+    "bmw_relevance": "Primary source-of-truth for Stage 2's exact KL free-bits/balancing formula, unimix, and 32x32-vs-16x16 latent-size default -- every numeric hyperparameter in stage2_correction.md's Changes 1 and 11 is verified against this paper. Also the source confirming that Stage 2's KL treatment (Changes 1/11) implements the formula CORRECTLY, meaning the observed posterior collapse is not a formula bug but a case DreamerV3's own mechanism was never designed to fix (the mechanism targets a lagging/inaccurate prior, not decoder-side channel competition)."
+  },
+  "uncertain": [
+    "Exact per-domain hyperparameter table (Table W.1 in the full PDF) was not independently re-verified beyond what this project's prior research pass already extracted; abstract-page fetch could not confirm page-level table contents."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "basic_info": {
+    "title": "Ontology-based Processing of Dynamic Maps in Automated Driving",
+    "authors": ["Haonan Qiu", "Adel Ayara", "Birte Glimm"],
+    "venue": "Proceedings of the 12th International Joint Conference on Knowledge Discovery, Knowledge Engineering and Knowledge Management (IC3K 2020) - Volume 2: KEOD, pp. 98-107, SCITEPRESS. DOI: 10.5220/0010133900980107. Affiliations: BMW Car IT GmbH / Institute of Artificial Intelligence, University of Ulm.",
+    "year": 2020,
+    "link": "https://www.scitepress.org/Papers/2020/101339/101339.pdf",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "ontology_based_reasoning",
+    "input_representation": "HD_map / map_data_formats / road_environment_model (low-level format ontologies abstracted to a high-level road-environment ontology; processed as map data streams)",
+    "sequence_model": "none",
+    "training_signal": "none (rule-based / logical inference)",
+    "graph_integration": "KG_RDF_semantics (OWL 2 RL ontologies, RDF triples, Datalog rules, SPARQL queries)",
+    "semantic_enrichment": "KG_RDF",
+    "decision_paradigm": "symbolic_reasoning",
+    "notes": "Knowledge-spatial architecture for a MOVING vehicle: continuous spatial reasoning using a spatial-window concept (forward/backward parameters) with spatial expiration (stream-like) over the road-environment ontology. Rules classified as primitive, transfer, spatial, and algorithmic. Evaluated for scalability in the SmartMapApp prototype using the RDFox reasoner."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Implements the P1b semantic-enrichment idea SYMBOLICALLY via OWL 2 RL ontologies, Datalog rules and SPARQL spatial reasoning rather than as learned vectorized tokens in a transformer. Although it reasons over a moving vehicle along a route via spatial windows, it does so by logical inference, not as a learned map-matching or path-prediction task, and involves no sequence learning and no label-free training.",
+    "novelty_vs_recombination": "real_gap: orthogonal symbolic stream-reasoning paradigm and a BMW in-house precedent, distinct from and not a precursor to the proposed learned transformer+latent-RL hybrid."
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "HIGH - BMW's in-house ontology-based dynamic-map processing, authored by the thesis interview lead Adel Ayara with Birte Glimm, defining BMW's symbolic spatial road-environment reasoning for a moving vehicle."
+  },
+  "uncertain": []
+}

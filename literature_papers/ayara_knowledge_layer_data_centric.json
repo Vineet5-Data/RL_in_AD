@@ -1,0 +1,40 @@
+{
+  "basic_info": {
+    "title": "A Knowledge Layer in Data-Centric Architectures in the Automotive Industry",
+    "authors": [
+      "Haonan Qiu",
+      "Adel Ayara",
+      "Christian Muehlbauer"
+    ],
+    "affiliation": "BMW Group, Germany",
+    "venue": "IC3K 2023 - Volume 2: KEOD (15th International Conference on Knowledge Engineering and Ontology Development), SciTePress, pages 296-303, January 2023",
+    "year": 2023,
+    "doi": "10.5220/0012255000003598",
+    "isbn": "978-989-758-671-2",
+    "issn": "2184-3228",
+    "link": "https://www.scitepress.org/Papers/2023/122550/122550.pdf",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "knowledge_layer_architecture / semantic_data_architecture",
+    "input_representation": "automotive_data_streams / data_centric_architecture",
+    "sequence_model": "none",
+    "training_signal": "none (rule-based / logical inference)",
+    "graph_integration": "KG_RDF_semantics",
+    "semantic_enrichment": "KG_RDF",
+    "decision_paradigm": "symbolic_reasoning",
+    "technical_details": "Proposes a knowledge layer for a data-centric automotive architecture aligned with the DIKW (Data, Information, Knowledge, Wisdom) hierarchy. The knowledge layer uses OWL 2 RL ontologies, Datalog rules, and SPARQL queries to perform knowledge abstraction and decision-making. A generic Tree2Graph/Graph2Tree data conversion bridges the schema-based information layer and the ontology-based knowledge layer via SHACL mappings. An Inference Engine (implemented in C++ with RDFox 6.0 APIs) is deployed both in-vehicle and in the backend (MongoDB middleware). The application scenario reasons over vehicle signal streams (VSSo) to derive daily user trips (DUTo: Fix/StartFix/EndFix, Segment, DailyUserTrip), suggest a business address, and detect traffic jams; reused ontologies include PDMo (Person Data Model) and HLMo (High-level Map). Evaluated via a real-world experiment with a BMW iX between Garching locations."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "It proposes a symbolic semantic/reasoning layer (related to the P1b idea of a semantically-enriched road-network/trajectory representation, but expressed as OWL/RDF ontologies + Datalog rules rather than a learned vector graph). It is not a transformer encoder, has no latent-space RL agent, performs no label-free representation learning, and does not perform GPS map matching (its 'trip inference' is rule-based abstraction of GPS fixes into segments/trips, not snapping GPS to a road network). All decision-making is symbolic logical inference via a reasoner.",
+    "novelty_vs_recombination": "real_gap - it occupies a purely symbolic knowledge-representation paradigm, orthogonal to the thesis's learned transformer+RL hybrid, so it shares no methodological pillar and instead motivates the alternative (non-learned) approach to semantic enrichment."
+  },
+  "relevance": {
+    "proximity": "adjacent",
+    "bmw_relevance": "HIGH - this is the most recent published signal of BMW's semantic-data and knowledge-representation strategy direction, co-authored by the thesis interview lead Adel Ayara, and notably mentions trajectory/daily-user-trip inference and future integration of machine learning with reasoning, situating the thesis within BMW's stated roadmap."
+  },
+  "uncertain": [
+    "citation_count"
+  ]
+}

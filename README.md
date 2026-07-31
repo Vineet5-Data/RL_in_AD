@@ -25,7 +25,7 @@ After testing on over 1.66 million Porto taxi routes (plus cross-city evaluation
 
 | Capability / Method | Algorithm Details | Accuracy / Result |
 | :--- | :--- | :--- |
-| **Offline (Batch) Map Matching** | **Hybrid Viterbi** (World-model road-head + Gaussian geometry emission/transition) | **86.8%** (0.868 tolerant Hit@1, Porto held-out) |
+| **Offline (Batch) Map Matching** | **Hybrid Viterbi** (World-model road-head + Gaussian geometry emission/transition) | **86.8%** (Porto held-out) |
 | **Online (Streaming) Map Matching** | **World-Model Road Head** + Geometry emission/transition | **82.9%** (0.829 match@1) |
 | **Path Prediction** | World-model prior rollouts | **Beats HMM baseline** across all prediction horizons |
 | **No-GPU / Fallback Mode** | Pure geometric HMM Viterbi | **84.5% offline / 59.0% online** (zero training required) |

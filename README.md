@@ -69,7 +69,6 @@ research/
   critique_and_next_steps.md adversarial internal review of an early architecture proposal
   archive/                   retired docs, kept verbatim as the historical experimental record
 literature_papers/           structured summaries of the papers used for prior-art and technique grounding
-CLAUDE.md                    standing engineering conventions and project vocabulary for agentic sessions
 ```
 
 ## Roadmap

@@ -96,4 +96,4 @@ literature_papers/                  # Structured summaries of foundational resea
 
 ## License
 
-[MIT License](LICENSE
+[MIT License](LICENSE)

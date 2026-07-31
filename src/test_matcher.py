@@ -5,12 +5,12 @@
           predict(horizon=15): 15 segments, consecutive pairs graph-connected
   tdrive  match_offline (auto -> nk) >= 0.75, 10 trajs
 
-Run from .worktrees/research2:  python test_matcher.py
+Run from src/:  python test_matcher.py
 """
 
 import numpy as np
 
-from matcher import Matcher, ev  # noqa: F401  (matcher fixes pyarrow/torch import order)
+from matcher import Matcher, ev  # noqa: E402  (matcher sets up sys.path + import order; ev used below)
 
 import pyarrow.parquet as pq  # noqa: E402
 import pandas as pd  # noqa: E402

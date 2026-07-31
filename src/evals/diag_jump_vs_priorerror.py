@@ -27,7 +27,7 @@ P2 32x32 "final" checkpoint (the actual deployed matcher.py model), same
 held-out 500-traj split as eval_research2.py. CPU by default -- read-only,
 no training.
 
-Run (from .worktrees/research2):  python diag_jump_vs_priorerror.py [--max-traj 100]
+Run (from src/evals):  python diag_jump_vs_priorerror.py [--max-traj 100]
 """
 from __future__ import annotations
 
@@ -37,17 +37,13 @@ import sys
 import time
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-HMM = BASE / ".worktrees" / "HMM_baseline" / "hmm_baseline"
-sys.path.insert(0, str(HMM))
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path[:0] = [str(SRC), str(SRC / "hmm_baseline")]
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa: F401,E402  must load before torch on Windows
 import baseline_hmm as hb  # noqa: E402
-
-HERE = Path(__file__).resolve().parent
-DP = BASE / ".worktrees" / "data-preprocess"
-sys.path = [str(HERE), str(DP), *[p for p in sys.path if p not in {str(HERE), str(DP)}]]
-
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 

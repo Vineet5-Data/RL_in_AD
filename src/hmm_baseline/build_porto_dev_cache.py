@@ -2,25 +2,26 @@
 the held-out 200000:200500 range). Used for the beta sweep (classical_baseline_spec.md
 Compute section: "sweep on a 50-trajectory dev slice carved from the TRAINING split").
 
-Usage:
-  cd ~/Desktop/AlphaEvolve_research/.worktrees/kaggle
+Usage (from src/hmm_baseline):
   python build_porto_dev_cache.py
 """
 
 import os, sys, time
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-DP   = BASE / ".worktrees" / "data-preprocess"
-sys.path.insert(0, str(DP))
-sys.path.insert(0, str(BASE / ".worktrees" / "kaggle"))
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa: must precede torch
 import pandas as pd
 
-PROC_ROOT  = BASE / "data" / "processed"
-OSM_ROOT   = BASE / "data" / "osm"
-CKPT_DIR   = BASE / ".worktrees" / "kaggle" / "ckpt"
+DATA_ROOT  = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_ROOT  = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+PROC_ROOT  = DATA_ROOT / "processed"
+OSM_ROOT   = DATA_ROOT / "osm"
+CKPT_DIR   = CKPT_ROOT
 CACHE_OUT  = CKPT_DIR / "cache_test" / "porto_dev_n50_r50_k10.npz"
 PARQUET    = PROC_ROOT / "porto" / "part-000.parquet"
 
@@ -41,7 +42,7 @@ print(f"[dev] {len(df):,} fixes across {df['traj_id'].nunique()} trajectories")
 del df_full, tbl_full, tbl
 
 from dataset.candidates   import CandidateIndex
-from dataset.trajectories import TrajectoryGraphDataset, collate_fn
+from dataset.trajectories import TrajectoryGraphDataset
 from dataset.config       import SequenceConfig, RetrievalConfig
 
 ci = CandidateIndex.from_city(str(OSM_ROOT), "porto")

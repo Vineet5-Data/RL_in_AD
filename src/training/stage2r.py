@@ -52,7 +52,7 @@ import torch.nn.functional as F
 try:
     from models.world_model2 import (RSSM2, HeadsLight, straight_through_sample,
                                       kl_categorical_pergroup, symlog)
-    from models.world_model import _mixed_probs
+    from models.world_model import _mixed_probs, free_bits_kl
     from training.stage2 import (LengthCapped, _stage1_encoder, _soft_road_ce,
                                   extract_frozen_features)
     from training.stage1 import _road_embeddings, _road_encoder_and_graph, build_loader
@@ -60,7 +60,7 @@ try:
 except ImportError:  # flat layout (Kaggle CODE_ROOT on sys.path)
     from world_model2 import (RSSM2, HeadsLight, straight_through_sample,  # type: ignore
                                kl_categorical_pergroup, symlog)
-    from world_model import _mixed_probs  # type: ignore
+    from world_model import _mixed_probs, free_bits_kl  # type: ignore
     from stage2 import (LengthCapped, _stage1_encoder, _soft_road_ce,  # type: ignore
                          extract_frozen_features)
     from stage1 import _road_embeddings, _road_encoder_and_graph, build_loader  # type: ignore
@@ -164,7 +164,7 @@ def wm_losses(rssm: RSSM2, heads: HeadsLight, feats: dict, road_z: torch.Tensor,
             kl_rep_pg = kl_categorical_pergroup(post_logits, prior_logits.detach())
             kl_dyn_raw_sum = kl_dyn_raw_sum + kl_dyn_pg[vt].sum()
             kl_rep_raw_sum = kl_rep_raw_sum + kl_rep_pg[vt].sum()
-            kl_t = 0.5 * kl_dyn_pg.clamp(min=1.0).sum(-1) + 0.1 * kl_rep_pg.clamp(min=1.0).sum(-1)
+            kl_t = free_bits_kl(kl_dyn_pg, kl_rep_pg)
             kl_loss = kl_loss + kl_t[vt].sum()
 
             with torch.no_grad():
@@ -296,17 +296,7 @@ def train(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city="porto", sour
     params = list(rssm.parameters()) + list(heads.parameters())
     if unfreeze_encoder:
         params += list(road_enc.parameters())
-    opt = torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)
-    if constant_lr:
-        # ponytail: P0 LR-tail probe — hold LR flat (no warmup/cosine) so the
-        # plateau test isn't confounded by the cosine decaying to ~0.
-        sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda _: 1.0)
-    else:
-        warmup = torch.optim.lr_scheduler.LinearLR(opt, start_factor=1e-3, end_factor=1.0,
-                                                    total_iters=max(1, warmup_steps))
-        cosine = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=max(1, steps - warmup_steps))
-        sched = torch.optim.lr_scheduler.SequentialLR(opt, schedulers=[warmup, cosine],
-                                                       milestones=[warmup_steps])
+    opt, sched = _build_optim_sched(params, lr, weight_decay, constant_lr, warmup_steps, steps)
     use_bf16 = device == "cuda" and torch.cuda.is_bf16_supported()
 
     start_step = 0
@@ -376,20 +366,20 @@ def train(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city="porto", sour
                   f"post_ent {out_l['post_ent']:.2f}  prior_ent {out_l['prior_ent']:.2f}  "
                   f"ss_prob {ss_prob:.3f}  lr {sched.get_last_lr()[0]:.2e}", flush=True)
         if step > 0 and step % ckpt_every == 0:
-            _save_ckpt(out / f"stage2r_{city}_step{step}.pt", rssm, heads, opt, sched, step, norm,
-                       road_enc=road_enc, extra_meta=extra_meta)
+            _save_and_log(out, city, rssm, heads, opt, sched, step, norm,
+                          road_enc=road_enc, extra_meta=extra_meta)
         # session wall-clock guard: Kaggle kills ~12h kernels WITHOUT saving output;
         # save the resume ckpt and exit cleanly instead (Run-2-XL chains sessions via --resume)
         if max_hours is not None and (time.time() - t0) > max_hours * 3600:
-            _save_ckpt(out / f"stage2r_{city}.pt", rssm, heads, opt, sched, step, norm,
-                       road_enc=road_enc, extra_meta=extra_meta)
+            path = _save_and_log(out, city, rssm, heads, opt, sched, step, norm,
+                                 road_enc=road_enc, extra_meta=extra_meta, final=True)
             print(f"[stage2r] max-hours {max_hours} reached at step {step}; "
-                  f"saved -> {out / f'stage2r_{city}.pt'} (chain next session with --resume)", flush=True)
+                  f"saved -> {path} (chain next session with --resume)", flush=True)
             return
 
-    _save_ckpt(out / f"stage2r_{city}.pt", rssm, heads, opt, sched, steps - 1, norm,
-               road_enc=road_enc, extra_meta=extra_meta)
-    print(f"[stage2r] saved -> {out / f'stage2r_{city}.pt'}")
+    path = _save_and_log(out, city, rssm, heads, opt, sched, steps - 1, norm,
+                         road_enc=road_enc, extra_meta=extra_meta, final=True)
+    print(f"[stage2r] saved -> {path}")
 
 
 def _save_ckpt(path, rssm, heads, opt, sched, step, norm, road_enc=None, extra_meta=None):
@@ -402,6 +392,33 @@ def _save_ckpt(path, rssm, heads, opt, sched, step, norm, road_enc=None, extra_m
     if extra_meta:
         ckpt["meta"].update(extra_meta)
     torch.save(ckpt, path)
+
+
+def _build_optim_sched(params, lr, weight_decay, constant_lr, warmup_steps, steps):
+    """Shared by train()/train_multi() -- identical optimizer/scheduler setup either way."""
+    opt = torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)
+    if constant_lr:
+        # ponytail: P0 LR-tail probe — hold LR flat (no warmup/cosine) so the
+        # plateau test isn't confounded by the cosine decaying to ~0.
+        sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda _: 1.0)
+    else:
+        warmup = torch.optim.lr_scheduler.LinearLR(opt, start_factor=1e-3, end_factor=1.0,
+                                                    total_iters=max(1, warmup_steps))
+        cosine = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=max(1, steps - warmup_steps))
+        sched = torch.optim.lr_scheduler.SequentialLR(opt, schedulers=[warmup, cosine],
+                                                       milestones=[warmup_steps])
+    return opt, sched
+
+
+def _save_and_log(out, tag, rssm, heads, opt, sched, step, norm, road_enc=None,
+                   extra_meta=None, final=False):
+    """Shared by train()/train_multi() -- `tag` is the city (single) or the
+    "multi_<sources>" tag (multi); `final=True` drops the _step{N} suffix, the
+    convention both training loops use for their --resume-chained checkpoint."""
+    suffix = "" if final else f"_step{step}"
+    path = out / f"stage2r_{tag}{suffix}.pt"
+    _save_ckpt(path, rssm, heads, opt, sched, step, norm, road_enc=road_enc, extra_meta=extra_meta)
+    return path
 
 
 def train_multi(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city_sources,
@@ -471,15 +488,7 @@ def train_multi(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city_sources
     heads = HeadsLight(h_dim=rssm.h_dim, stoch_dim=stoch_groups * stoch_classes,
                        road_dim=road_dim).to(device)
     params = list(rssm.parameters()) + list(heads.parameters())
-    opt = torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)
-    if constant_lr:
-        sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda _: 1.0)
-    else:
-        warmup = torch.optim.lr_scheduler.LinearLR(opt, start_factor=1e-3, end_factor=1.0,
-                                                    total_iters=max(1, warmup_steps))
-        cosine = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=max(1, steps - warmup_steps))
-        sched = torch.optim.lr_scheduler.SequentialLR(opt, schedulers=[warmup, cosine],
-                                                       milestones=[warmup_steps])
+    opt, sched = _build_optim_sched(params, lr, weight_decay, constant_lr, warmup_steps, steps)
     use_bf16 = device == "cuda" and torch.cuda.is_bf16_supported()
 
     start_step = 0
@@ -549,18 +558,17 @@ def train_multi(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city_sources
                   f"cl_gps_z_km {out_l['cl_gps_z']:.4f}  kl_act {out_l['kl_act']:.3f}  "
                   f"lr {sched.get_last_lr()[0]:.2e}  |  per-city(last50) {per_city}", flush=True)
         if step > 0 and step % ckpt_every == 0:
-            _save_ckpt(out / f"stage2r_{tag}_step{step}.pt", rssm, heads, opt, sched, step, norm,
-                       extra_meta=extra_meta)
+            _save_and_log(out, tag, rssm, heads, opt, sched, step, norm, extra_meta=extra_meta)
         if max_hours is not None and (time.time() - t0) > max_hours * 3600:
-            _save_ckpt(out / f"stage2r_{tag}.pt", rssm, heads, opt, sched, step, norm,
-                       extra_meta=extra_meta)
+            path = _save_and_log(out, tag, rssm, heads, opt, sched, step, norm,
+                                 extra_meta=extra_meta, final=True)
             print(f"[stage2r] max-hours {max_hours} reached at step {step}; "
-                  f"saved -> {out / f'stage2r_{tag}.pt'} (chain next session with --resume)", flush=True)
+                  f"saved -> {path} (chain next session with --resume)", flush=True)
             return
 
-    _save_ckpt(out / f"stage2r_{tag}.pt", rssm, heads, opt, sched, steps - 1, norm,
-               extra_meta=extra_meta)
-    print(f"[stage2r] saved -> {out / f'stage2r_{tag}.pt'}")
+    path = _save_and_log(out, tag, rssm, heads, opt, sched, steps - 1, norm,
+                         extra_meta=extra_meta, final=True)
+    print(f"[stage2r] saved -> {path}")
 
 
 def _synthetic_feats(B=4, L=12, obs_dim=256, road_dim=256, K=10, n_roads=50, seed=0):

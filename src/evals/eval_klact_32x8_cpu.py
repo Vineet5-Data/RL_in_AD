@@ -6,7 +6,7 @@ per-group-density finding). Bypasses eval_research2.py's _checkpoint_table() (wh
 only scans research2/ckpt/, where the production P2 32x32 ckpt lives) to point
 directly at the downloaded probe file without touching that directory.
 
-Run (from .worktrees/research2):
+Run (from src/evals):
   python eval_klact_32x8_cpu.py <path-to-stage2r_porto.pt>
 """
 import sys

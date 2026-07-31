@@ -58,6 +58,13 @@ def kl_categorical(p_logits: torch.Tensor, q_logits: torch.Tensor) -> torch.Tens
     return kl_categorical_pergroup(p_logits, q_logits).sum(-1)
 
 
+def free_bits_kl(kl_dyn_pg: torch.Tensor, kl_rep_pg: torch.Tensor,
+                  w_dyn: float = 0.5, w_rep: float = 0.1) -> torch.Tensor:
+    """DreamerV3 per-group free-bits KL loss: dyn/rep split, 1-nat floor per group,
+    summed over groups. kl_dyn_pg/kl_rep_pg: [..., G] -> [...]."""
+    return w_dyn * kl_dyn_pg.clamp(min=1.0).sum(-1) + w_rep * kl_rep_pg.clamp(min=1.0).sum(-1)
+
+
 class RSSM(nn.Module):
     def __init__(self, obs_dim: int = 256, road_dim: int = 256, h_dim: int = 512,
                  groups: int = STOCH_GROUPS, classes: int = STOCH_CLASSES, hidden: int = 256):

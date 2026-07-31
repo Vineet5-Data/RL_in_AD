@@ -17,7 +17,7 @@ this project's 5 prepped cities (porto/tdrive/geolife_car/cabspotting/romataxi a
 ALL in the current multi-city mix) -- this script is the harness for when one
 becomes available (a 6th city, or a future leave-one-city-out training run).
 
-Usage (from .worktrees/research2):
+Usage (from src/evals):
   python eval_cross_city.py --ckpt <path> --city tdrive [--source tdrive] [--max-traj 500]
   python eval_cross_city.py --ckpt ckpt/stage2r_porto_p2_32x32.pt --city cabspotting
 """
@@ -25,17 +25,24 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
-import pyarrow.parquet  # noqa: F401  must load before torch on Windows
-import torch
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
 
-import eval_research2 as ev
+import pyarrow.parquet  # noqa: F401,E402  must load before torch on Windows
+import torch  # noqa: E402
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-PROC_ROOT = BASE / "data" / "processed"
-OSM_ROOT = BASE / "data" / "osm"
-BASE_CKPT_DIR = BASE / ".worktrees" / "kaggle" / "ckpt"
+import eval_research2 as ev  # noqa: E402
+
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
+DATA_ROOT = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_ROOT = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+PROC_ROOT = DATA_ROOT / "processed"
+OSM_ROOT = DATA_ROOT / "osm"
+BASE_CKPT_DIR = CKPT_ROOT
 S0_CKPT = BASE_CKPT_DIR / "stage0_porto.pt"
 CACHE_DIR = BASE_CKPT_DIR / "cache_test"
 

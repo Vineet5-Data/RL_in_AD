@@ -9,7 +9,7 @@ point directly at the downloaded multi-city ckpt, same pattern as
 eval_klact_32x8_cpu.py. Runs both the standard Porto in-domain eval and the T-Drive
 OOD eval against the SAME checkpoint in one pass for direct comparison.
 
-Run (from .worktrees/research2):
+Run (from src/evals):
   python eval_multicity_step13217.py <path-to-stage2r_multi_....pt>
 """
 import sys

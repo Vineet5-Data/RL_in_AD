@@ -3,7 +3,7 @@
 Mirrors eval_offline_viterbi.py, but evaluates the Porto-trained Run-2-XL WM
 zero-shot on the T-Drive/Beijing graph and candidate cache.
 
-Usage, from .worktrees/research2:
+Usage, from src/evals:
   python eval_ood_tdrive_offline_viterbi.py
   python eval_ood_tdrive_offline_viterbi.py --max-traj 25
 """
@@ -16,17 +16,13 @@ import sys
 import time
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-HMM = BASE / ".worktrees" / "HMM_baseline" / "hmm_baseline"
-sys.path.insert(0, str(HMM))
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path[:0] = [str(SRC), str(SRC / "hmm_baseline")]
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa: F401,E402  must load before torch on Windows
 import baseline_hmm as hb  # noqa: E402
-
-HERE = Path(__file__).resolve().parent
-DP = BASE / ".worktrees" / "data-preprocess"
-sys.path = [str(HERE), str(DP), *[p for p in sys.path if p not in {str(HERE), str(DP)}]]
-
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 

@@ -22,7 +22,7 @@ Metrics:
                design decision, methodology-comparison Sec.5 Rank-1 caveat 2).
   kl, ent      posterior-collapse monitors (the redesign's primary claim).
 
-Usage (from .worktrees/research2):
+Usage (from src/evals):
   python eval_research2.py                      # all stage2r ckpts, road-head decode
   python eval_research2.py --actor-ckpt ckpt/stage3_porto.pt   # actor decode
 """
@@ -32,20 +32,22 @@ import os
 import sys
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
 HERE = Path(__file__).resolve().parent
-DP = BASE / ".worktrees" / "data-preprocess"
-sys.path = [str(HERE), str(DP), *[p for p in sys.path if p not in {str(HERE), str(DP)}]]
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa: E402  must precede torch
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 from torch.utils.data import DataLoader  # noqa: E402
 
-PROC_ROOT = BASE / "data" / "processed"
-OSM_ROOT = BASE / "data" / "osm"
-CKPT_DIR = HERE / "ckpt"
-BASE_CKPT_DIR = BASE / ".worktrees" / "kaggle" / "ckpt"
+DATA_ROOT = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_ROOT = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+PROC_ROOT = DATA_ROOT / "processed"
+OSM_ROOT = DATA_ROOT / "osm"
+CKPT_DIR = CKPT_ROOT
+BASE_CKPT_DIR = CKPT_ROOT
 S0_CKPT = BASE_CKPT_DIR / "stage0_porto.pt"
 S1_CKPT = BASE_CKPT_DIR / "stage1_porto.pt"
 EVAL_CACHE = BASE_CKPT_DIR / "cache_test" / "porto_holdout_n500_r50_k10.npz"

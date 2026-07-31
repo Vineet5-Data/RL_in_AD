@@ -9,18 +9,23 @@ tolerant hit = chosen d_perp <= best d_perp + 5 m, first 8 fixes warmup-skipped.
 
 Bar (pre-registered): retrained base > zero-shot base on same split.
 
-Usage, from .worktrees/research2:  python eval_w1_silesia.py [--max-traj 100]
+Usage, from src/evals:  python eval_w1_silesia.py [--max-traj 100]
 """
 
 from __future__ import annotations
 
 import argparse
+import sys
 import time
+from pathlib import Path
 
 import numpy as np
 
-from matcher import Matcher, BASE  # noqa: F401  (sys.path setup)
-from dataset.trajectories import load_source_df
+SRC = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SRC))
+
+from matcher import Matcher, BASE  # noqa: E402
+from dataset.trajectories import load_source_df  # noqa: E402
 
 WARM = 8
 MAX_FIX = 200        # ponytail: cap per-traj fixes, enough for a health check

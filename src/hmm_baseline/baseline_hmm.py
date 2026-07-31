@@ -19,8 +19,7 @@ Decode: log-space Viterbi over <=10 states/fix (--predict swaps this for forward
 filtering to t=T_warm then transition-only rollout -- the classical counterpart of
 the RSSM prior rollout in eval_stage2.py).
 
-Usage:
-  cd ~/Desktop/AlphaEvolve_research/.worktrees/HMM_baseline/hmm_baseline
+Usage (from src/hmm_baseline):
   python baseline_hmm.py --emission nk --max-traj 5            # matching smoke test
   python baseline_hmm.py --emission nk --predict --max-traj 5  # prediction smoke test
 """
@@ -28,10 +27,10 @@ Usage:
 import os, sys, math, time, argparse
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-DP   = BASE / ".worktrees" / "data-preprocess"
-sys.path.insert(0, str(DP))
-sys.path.insert(0, str(BASE / ".worktrees" / "kaggle"))
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa: must precede torch
 import numpy as np
@@ -40,9 +39,11 @@ import networkx as nx
 import torch
 import torch.nn.functional as F
 
-PROC_ROOT = BASE / "data" / "processed"
-OSM_ROOT  = BASE / "data" / "osm"
-CKPT_DIR  = BASE / ".worktrees" / "kaggle" / "ckpt"
+DATA_ROOT = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_ROOT = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+PROC_ROOT = DATA_ROOT / "processed"
+OSM_ROOT  = DATA_ROOT / "osm"
+CKPT_DIR  = CKPT_ROOT
 S0_CKPT   = CKPT_DIR / "stage0_porto.pt"
 S1_CKPT   = CKPT_DIR / "stage1_porto.pt"
 
@@ -109,12 +110,7 @@ class RouteDist:
         return cache[0].get(b)   # None -> unreachable within cutoff
 
 
-def haversine_m(lat1, lon1, lat2, lon2):
-    R = 6_371_000.0
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1); dl = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * R * math.asin(math.sqrt(a))
+from preprocessing.geo import haversine_m  # noqa: E402  scalar args work fine (numpy ufuncs)
 
 
 # -- log-space helpers (all handle -inf) ---------------------------------------

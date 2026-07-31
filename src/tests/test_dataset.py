@@ -1,5 +1,7 @@
 """Network-free tests for the training-data layer (rewards, temporal, collate, groups)."""
 
+import math
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -41,13 +43,14 @@ def test_reward_speed():
 
 def test_reward_topo():
     assert reward_topo(5, None, []) == 1.0                  # first step unconstrained
-    assert reward_topo(5, 2, [5, 7]) == 1.0
-    assert reward_topo(9, 2, [5, 7]) == 0.0
+    assert reward_topo(5, 2, [5, 7]) == 1.0                  # graph-adjacent
+    assert reward_topo(2, 2, [5, 7]) == 1.0                  # staying on the same segment
+    assert reward_topo(9, 2, [5, 7]) == 0.0                  # disconnected
 
 
 def test_reward_smooth_and_combined():
     assert reward_smooth(10, 10) == 0.0
-    assert reward_smooth(10, 40) == pytest.approx(-30.0)
+    assert reward_smooth(10, 40) == pytest.approx(-math.radians(30.0))
     comp = {"dist": -1.0, "head": 1.0, "oneway": 0.0, "speed": 0.0, "topo": 1.0, "smooth": 0.0}
     # weights [1.0, 0.5, 1.0, 0.3, 2.0, 0.2] -> -1 + 0.5 + 2.0 = 1.5
     assert combined_reward(comp, RewardConfig()) == pytest.approx(1.5)

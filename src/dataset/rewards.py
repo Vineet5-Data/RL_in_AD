@@ -1,5 +1,10 @@
 """P3 label-free physical-constraint rewards (methodology 2.5).
 
+Scalar reference implementation -- readable one-fix-at-a-time math, kept in
+sync with training/rewards.py's batched tensor version (the one actually
+used in training) by tests/test_dataset.py. If you change the reward formula
+here, change it there too (and vice versa).
+
 All functions are pure and unit-testable. Inputs use SI where noted:
 GPS speed in m/s, road speed limit in km/h (converted internally).
 """
@@ -47,15 +52,17 @@ def reward_speed(v_gps_ms: float, v_limit_kph: float) -> float:
 
 
 def reward_topo(seg_id: int, prev_seg_id, neighbors: Iterable[int]) -> float:
-    """Constraint 4: 1 if the chosen segment is graph-adjacent to the previous one."""
+    """Constraint 4: 1 if the chosen segment is the same one as last step (staying
+    put is always connected to itself) or graph-adjacent to it."""
     if prev_seg_id is None:
         return 1.0  # no constraint on the first step
-    return 1.0 if seg_id in set(neighbors) else 0.0
+    return 1.0 if (seg_id == prev_seg_id or seg_id in set(neighbors)) else 0.0
 
 
 def reward_smooth(dtheta_gps: float, dtheta_road: float) -> float:
-    """Constraint 5: penalize divergence between GPS and road turn angles."""
-    return -angular_diff_deg(dtheta_gps, dtheta_road)
+    """Constraint 5: penalize divergence between GPS and road turn angles, in
+    radians (matches training/rewards.py's r_smooth scale)."""
+    return -math.radians(angular_diff_deg(dtheta_gps, dtheta_road))
 
 
 def combined_reward(components: dict, cfg: RewardConfig = RewardConfig()) -> float:

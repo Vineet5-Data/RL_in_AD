@@ -26,9 +26,10 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-DP = BASE / ".worktrees" / "data-preprocess"
-sys.path.insert(0, str(DP))
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 BBOX = (18.60, 49.45, 19.05, 50.32)   # lon_min, lat_min, lon_max, lat_max
 TILE = 0.1

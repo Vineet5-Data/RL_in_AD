@@ -6,18 +6,17 @@ get a true held-out set for Porto, size given by --n-trajs.
 load_source_df has no skip param, so we: read traj_id col to get ordered
 unique IDs, slice [200000:200000+n], filter parquet to those IDs.
 
-Usage:
-  cd ~/Desktop/AlphaEvolve_research/.worktrees/HMM_baseline/hmm_baseline
+Usage (from src/hmm_baseline):
   python build_porto_holdout_cache.py --n-trajs 500
 """
 
 import os, sys, time, argparse
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-DP   = BASE / ".worktrees" / "data-preprocess"
-sys.path.insert(0, str(DP))
-sys.path.insert(0, str(BASE / ".worktrees" / "kaggle"))
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa: must precede torch
 import pyarrow as pa
@@ -27,9 +26,11 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--n-trajs", type=int, default=500)
 args = ap.parse_args()
 
-PROC_ROOT  = BASE / "data" / "processed"
-OSM_ROOT   = BASE / "data" / "osm"
-CKPT_DIR   = BASE / ".worktrees" / "kaggle" / "ckpt"
+DATA_ROOT  = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_ROOT  = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+PROC_ROOT  = DATA_ROOT / "processed"
+OSM_ROOT   = DATA_ROOT / "osm"
+CKPT_DIR   = CKPT_ROOT
 CACHE_OUT  = CKPT_DIR / "cache_test" / f"porto_holdout_n{args.n_trajs}_r50_k10.npz"
 PARQUET    = PROC_ROOT / "porto" / "part-000.parquet"
 
@@ -55,7 +56,7 @@ del df_full, tbl_full, tbl
 
 # ── build candidate index and cache ──────────────────────────────────────────
 from dataset.candidates   import CandidateIndex
-from dataset.trajectories import TrajectoryGraphDataset, collate_fn
+from dataset.trajectories import TrajectoryGraphDataset
 from dataset.config       import SequenceConfig, RetrievalConfig
 
 ci = CandidateIndex.from_city(str(OSM_ROOT), "porto")

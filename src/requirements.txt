@@ -1,5 +1,9 @@
+torch>=2.1
 torch-geometric==2.8.0
+numpy>=1.24
+pandas>=2.0
 pyarrow>=14.0
+networkx>=3.0
 geopandas>=1.0
 osmnx>=2.0
-contextily>=1.7  # viz/visualize_agent_driving.py real-map basemap tiles
+pytest>=7.0

@@ -15,12 +15,15 @@ result forces:
   predict        WM prior rollout over road-graph successors (works zero-shot
                  on unseen cities; degrades gracefully -- OOD hit@5 0.536).
 
-Usage, from .worktrees/research2:
+Usage, from src/:
   from matcher import Matcher
   m = Matcher("porto")
   segs = m.match_offline(lat, lon, t)   # int64 per fix, -1 = no road in 50 m
   segs = m.match_online(lat, lon, t)
   future = m.predict(lat, lon, t, horizon=15)
+
+Data/checkpoints aren't shipped in this repo; point AE_DATA_ROOT/AE_CKPT_ROOT
+at wherever you've put them (default: <repo>/data and <repo>/ckpt).
 """
 
 from __future__ import annotations
@@ -29,12 +32,9 @@ import os
 import sys
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-HERE = Path(__file__).resolve().parent
-DP = BASE / ".worktrees" / "data-preprocess"
-HMM = BASE / ".worktrees" / "HMM_baseline" / "hmm_baseline"
-sys.path = [str(HERE), str(DP), str(HMM),
-            *[p for p in sys.path if p not in {str(HERE), str(DP), str(HMM)}]]
+SRC = Path(__file__).resolve().parent
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
+sys.path[:0] = [str(SRC), str(SRC / "hmm_baseline")]
 
 import pyarrow.parquet  # noqa: F401,E402  must load before torch on Windows
 import numpy as np  # noqa: E402
@@ -42,27 +42,13 @@ import pandas as pd  # noqa: E402
 import torch  # noqa: E402
 
 import baseline_hmm as hb  # noqa: E402
-import eval_research2 as ev  # noqa: E402
+from evals import eval_research2 as ev  # noqa: E402
 from preprocessing.clean import _finalize_segment  # noqa: E402
+from training.stage1 import _road_embeddings  # noqa: E402
 
 BETA = 20.0
 CHUNK = 128            # Stage-1 transformer cap (SequenceConfig.max_len)
 TRAINED_CITIES = {"porto"}
-
-
-def _road_z(city):
-    """Stage-0 Porto road encoder applied to `city`'s graph (zero-shot off-Porto)."""
-    from roadgraph.io import load_pyg
-    from models.road_encoder import RoadGAT
-
-    data = load_pyg(str(ev.OSM_ROOT), city).to(ev.DEVICE)
-    enc = RoadGAT(num_cont=data.x.size(1),
-                  num_highway=max(64, int(data.highway_id.max()) + 1)).to(ev.DEVICE)
-    enc.load_state_dict(torch.load(str(ev.S0_CKPT), map_location=ev.DEVICE, weights_only=True))
-    enc.eval()
-    with torch.no_grad():
-        z = enc(data.x, data.highway_id, data.edge_index)
-    return z.detach()
 
 
 class Matcher:
@@ -73,7 +59,7 @@ class Matcher:
         self.trained = city in TRAINED_CITIES
         self.ci = CandidateIndex.from_city(str(ev.OSM_ROOT), city)
         self.rd = hb.RouteDist(hb.build_road_digraph(city))
-        self.road_z = _road_z(city)
+        self.road_z = _road_embeddings(str(ev.OSM_ROOT), city, str(ev.S0_CKPT), ev.DEVICE)
         self.stage1 = ev._stage1(self.road_z.size(1))
         ckpt_path = Path(ckpt) if str(ckpt).endswith(".pt") else ev._checkpoint_table()[ckpt]
         self.rssm, self.heads = ev._load_wm(ckpt_path, self.road_z.size(1))

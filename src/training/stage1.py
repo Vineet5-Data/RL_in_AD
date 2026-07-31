@@ -33,7 +33,7 @@ def _road_embeddings(osm_root, city, stage0_ckpt, device):
 
     data = load_pyg(osm_root, city).to(device)
     enc = RoadGAT(num_cont=data.x.size(1), num_highway=max(64, int(data.highway_id.max()) + 1)).to(device)
-    enc.load_state_dict(torch.load(stage0_ckpt, map_location=device))
+    enc.load_state_dict(torch.load(stage0_ckpt, map_location=device, weights_only=True))
     enc.eval()
     with torch.no_grad():
         z = enc(data.x, data.highway_id, data.edge_index)
@@ -50,7 +50,7 @@ def _road_encoder_and_graph(osm_root, city, stage0_ckpt, device):
 
     data = load_pyg(osm_root, city).to(device)
     enc = RoadGAT(num_cont=data.x.size(1), num_highway=max(64, int(data.highway_id.max()) + 1)).to(device)
-    enc.load_state_dict(torch.load(stage0_ckpt, map_location=device))
+    enc.load_state_dict(torch.load(stage0_ckpt, map_location=device, weights_only=True))
     enc.train()
     return enc, data
 

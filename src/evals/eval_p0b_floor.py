@@ -10,17 +10,22 @@ the road head can reach. Compare to the observed plateau road CE ~1.36 nats:
 Candidates via the porto retrieval index (radius 50m, k 10 = RetrievalConfig),
 mirroring eval_w1_silesia. Local inference only.
 
-Usage, from .worktrees/research2:  python eval_p0b_floor.py [--n 3000]
+Usage, from src/evals:  python eval_p0b_floor.py [--n 3000]
 """
 
 from __future__ import annotations
 
 import argparse
+import sys
+from pathlib import Path
 
 import numpy as np
 
-from matcher import Matcher, BASE  # noqa: F401  (sys.path setup)
-from dataset.trajectories import load_source_df
+SRC = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SRC))
+
+from matcher import Matcher, BASE  # noqa: E402
+from dataset.trajectories import load_source_df  # noqa: E402
 
 SIGMA = 10.0  # must match _soft_road_ce
 
@@ -42,7 +47,7 @@ def main():
     ap.add_argument("--source", default="porto")
     args = ap.parse_args()
 
-    m = Matcher(args.source if args.source == "porto" else "porto")
+    m = Matcher(args.source)
     df = load_source_df(str(BASE / "data" / "processed"), args.source, None)
     lat = df["lat"].to_numpy(np.float64)
     lon = df["lon"].to_numpy(np.float64)

@@ -16,7 +16,7 @@ road head with a permutation-equivariant candidate scorer (world_model.py
 RoadScorer), 7E fixes Hit@1 to segment-id comparison (eval-side). Road losses
 (posterior + Change-4 prior aux) use Change-9 soft emission targets, ported
 from Stage-1's de-leaked retrain. Change 5 is the eval harness
-(.worktrees/evaluation/eval_stage2.py), fixed there separately.
+(the retired Track-A eval harness), fixed there separately.
 
 Run:  python -m training.stage2 --processed-root data/processed --osm-root data/osm --stage0-ckpt ckpt/stage0_porto.pt --stage1-ckpt ckpt/stage1_porto.pt
 Smoke: python -m training.stage2 --smoke
@@ -36,10 +36,10 @@ from torch.utils.data import Dataset
 
 try:
     from models.world_model import (RSSM, Heads, straight_through_sample, kl_categorical_pergroup,
-                                     mdn_nll, mdn_mean)
+                                     free_bits_kl, mdn_nll, mdn_mean)
 except ImportError:
     from world_model import (RSSM, Heads, straight_through_sample, kl_categorical_pergroup,  # type: ignore
-                              mdn_nll, mdn_mean)
+                              free_bits_kl, mdn_nll, mdn_mean)
 
 try:
     from training.stage1 import _road_embeddings, build_loader
@@ -222,7 +222,7 @@ def rssm_losses(rssm: RSSM, heads: Heads, feats: dict, road_z: torch.Tensor, bet
             kl_rep_pg = kl_categorical_pergroup(post_logits, prior_logits.detach())   # [B,G], trains posterior
             kl_dyn_raw_sum = kl_dyn_raw_sum + kl_dyn_pg[vt].sum()
             kl_rep_raw_sum = kl_rep_raw_sum + kl_rep_pg[vt].sum()
-            kl_t = 0.5 * kl_dyn_pg.clamp(min=1.0).sum(-1) + 0.1 * kl_rep_pg.clamp(min=1.0).sum(-1)
+            kl_t = free_bits_kl(kl_dyn_pg, kl_rep_pg)
             kl_loss = kl_loss + kl_t[vt].sum()
 
             with torch.no_grad():

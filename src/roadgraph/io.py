@@ -91,8 +91,11 @@ def load_pyg(out_root: Path, city: str, normalize: bool = True):
     }
     x = np.column_stack(list(feats.values())).astype("float32")
     if normalize:
-        # z-score the unbounded columns; leave sin/cos and binary flags untouched
-        zcols = [0, 3, 5, 6, 8, 9, 10, 11, 12]  # log_length, curvature, lanes, speed, degrees
+        # z-score the unbounded columns; leave sin/cos and binary flags untouched.
+        # By name, not position -- a reordered/added feats key can't silently
+        # z-score (or skip z-scoring) the wrong column.
+        pass_through = {"head_sin", "head_cos", "oneway", "bridge", "tunnel"}
+        zcols = [i for i, k in enumerate(feats) if k not in pass_through]
         mu = x[:, zcols].mean(0)
         sd = x[:, zcols].std(0)
         sd[sd == 0] = 1.0

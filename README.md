@@ -65,10 +65,10 @@ Negative results here were as decision-relevant as the positives — each one cl
 src/
   matcher.py, test_matcher.py    production matching/prediction API (offline + online + predict)
   models/                        world model (decoder-light RSSM), GPS/road encoders
-  training/                      training stages (stage0-3, decoder-light retrain, TPU/XLA port)
+  training/                      training stages (stage0-3, decoder-light retrain)
   hmm_baseline/                  classical geometric HMM Viterbi fallback (no GPU, no training)
   dataset/, preprocessing/, roadgraph/   GPS cleaning, road-graph construction, candidate retrieval
-  eval_*.py, diag_*.py           evaluation harnesses and diagnostic probes referenced in the project log
+  evals/                         evaluation harnesses and diagnostic probes referenced in the project log
   tests/                         unit tests for the data/road-graph pipeline
 research/
   project_summary.md         the single active project log — current results, full run history, roadmap

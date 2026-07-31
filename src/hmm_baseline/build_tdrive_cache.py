@@ -10,20 +10,22 @@ Usage:
 import os, sys, time
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-DP   = BASE / ".worktrees" / "data-preprocess"
-sys.path.insert(0, str(DP))
-sys.path.insert(0, str(BASE / ".worktrees" / "kaggle"))
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa
 
-PROC_ROOT  = BASE / "data" / "processed"
-OSM_ROOT   = BASE / "data" / "osm"
-CKPT_DIR   = BASE / ".worktrees" / "kaggle" / "ckpt"
+DATA_ROOT  = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_ROOT  = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+PROC_ROOT  = DATA_ROOT / "processed"
+OSM_ROOT   = DATA_ROOT / "osm"
+CKPT_DIR   = CKPT_ROOT
 CACHE_OUT  = CKPT_DIR / "cache_test" / "tdrive_n500_r50_k10.npz"
 N_TRAJS    = 500
 
-from dataset.trajectories import load_source_df, TrajectoryGraphDataset, collate_fn
+from dataset.trajectories import load_source_df, TrajectoryGraphDataset
 from dataset.candidates   import CandidateIndex
 from dataset.config       import SequenceConfig, RetrievalConfig
 

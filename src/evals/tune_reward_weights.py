@@ -21,7 +21,7 @@ Pipeline per grid config (dist,head,oneway,speed,topo,smooth):
 Winner gets a full 500-traj confirm eval. CPU-only, short budgets -- this is
 a proxy sweep for ranking, not a substitute for a full-budget run.
 
-Run (from .worktrees/research2): python tune_reward_weights.py
+Run (from src/evals): python tune_reward_weights.py
 """
 
 from __future__ import annotations
@@ -31,10 +31,10 @@ import os
 import sys
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
 HERE = Path(__file__).resolve().parent
-DP = BASE / ".worktrees" / "data-preprocess"
-sys.path = [str(HERE), str(DP), *[p for p in sys.path if p not in {str(HERE), str(DP)}]]
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa: E402  must precede torch
 import torch  # noqa: E402
@@ -56,11 +56,13 @@ from dataset.config import SequenceConfig, RetrievalConfig  # noqa: E402
 import eval_research2 as ev  # noqa: E402  reuse _road_z / _stage1 / eval_checkpoint
 ev.DEVICE = DEVICE  # force CPU regardless of local CUDA availability (user decision 2026-07-25)
 
-CKPT_DIR = HERE / "ckpt"
+CKPT_ROOT = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+DATA_ROOT = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_DIR = CKPT_ROOT
 WM_CKPT = CKPT_DIR / "stage2r_porto.pt"
-PROC_ROOT = BASE / "data" / "processed"
-OSM_ROOT = BASE / "data" / "osm"
-CACHE_DIR = BASE / ".worktrees" / "kaggle" / "ckpt" / "cache_test"
+PROC_ROOT = DATA_ROOT / "processed"
+OSM_ROOT = DATA_ROOT / "osm"
+CACHE_DIR = CKPT_ROOT / "cache_test"
 TRAIN_CACHE = CACHE_DIR / "porto_n20000_r50_k10.npz"   # exact-size, already precomputed
 
 TRAIN_TRAJS = 20_000

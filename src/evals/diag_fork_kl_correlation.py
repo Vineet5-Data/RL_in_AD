@@ -21,7 +21,7 @@ Uses the same held-out Porto split as eval_research2.py (trajs
 [200000, 200500)) so this measures generalization behavior, not memorized
 training-set behavior.
 
-Run (from .worktrees/research2). CPU by default -- the Silesia encoder-
+Run (from src/evals). CPU by default -- the Silesia encoder-
 unfrozen job is training on GPU concurrently, keep this off the GPU:
   python diag_fork_kl_correlation.py --ckpt ckpt/stage2r_porto_run2xl_16x16_final.pt
 """
@@ -30,19 +30,21 @@ import os
 import sys
 from pathlib import Path
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
 HERE = Path(__file__).resolve().parent
-DP = BASE / ".worktrees" / "data-preprocess"
-sys.path = [str(HERE), str(DP), *[p for p in sys.path if p not in {str(HERE), str(DP)}]]
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
 
 import pyarrow.parquet  # noqa: E402  must precede torch
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 from torch.utils.data import DataLoader  # noqa: E402
 
-PROC_ROOT = BASE / "data" / "processed"
-OSM_ROOT = BASE / "data" / "osm"
-BASE_CKPT_DIR = BASE / ".worktrees" / "kaggle" / "ckpt"
+DATA_ROOT = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_ROOT = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+PROC_ROOT = DATA_ROOT / "processed"
+OSM_ROOT = DATA_ROOT / "osm"
+BASE_CKPT_DIR = CKPT_ROOT
 S0_CKPT = BASE_CKPT_DIR / "stage0_porto.pt"
 S1_CKPT = BASE_CKPT_DIR / "stage1_porto.pt"
 EVAL_CACHE = BASE_CKPT_DIR / "cache_test" / "porto_holdout_n500_r50_k10.npz"

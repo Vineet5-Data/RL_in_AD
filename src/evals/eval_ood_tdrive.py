@@ -4,7 +4,7 @@ This is intentionally a thin wrapper around eval_research2.py: it reuses the
 same metric code, checkpoints, and decoder path, but swaps the road graph,
 candidate cache, and trajectories from Porto to T-Drive.
 
-Usage, from .worktrees/research2:
+Usage, from src/evals:
   python eval_ood_tdrive.py --only final
   python eval_ood_tdrive.py --only final --max-traj 25
 """
@@ -13,18 +13,25 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
-import pyarrow.parquet  # noqa: F401  must load before torch on Windows
-import torch
-from torch.utils.data import DataLoader
+HERE = Path(__file__).resolve().parent
+SRC = HERE.parent
+sys.path.insert(0, str(SRC))
 
-import eval_research2 as ev
+import pyarrow.parquet  # noqa: F401,E402  must load before torch on Windows
+import torch  # noqa: E402
+from torch.utils.data import DataLoader  # noqa: E402
 
-BASE = Path(os.path.expanduser("~/Desktop/AlphaEvolve_research"))
-PROC_ROOT = BASE / "data" / "processed"
-OSM_ROOT = BASE / "data" / "osm"
-BASE_CKPT_DIR = BASE / ".worktrees" / "kaggle" / "ckpt"
+import eval_research2 as ev  # noqa: E402
+
+BASE = Path(os.environ.get("AE_REPO_ROOT", SRC.parent))
+DATA_ROOT = Path(os.environ.get("AE_DATA_ROOT", BASE / "data"))
+CKPT_ROOT = Path(os.environ.get("AE_CKPT_ROOT", BASE / "ckpt"))
+PROC_ROOT = DATA_ROOT / "processed"
+OSM_ROOT = DATA_ROOT / "osm"
+BASE_CKPT_DIR = CKPT_ROOT
 S0_CKPT = BASE_CKPT_DIR / "stage0_porto.pt"
 EVAL_CACHE = BASE_CKPT_DIR / "cache_test" / "tdrive_n500_r50_k10.npz"
 

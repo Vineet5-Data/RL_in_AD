@@ -1,25 +1,25 @@
-# AI-Driven Map Matching and Path Prediction
+# RL/IL-Driven Map Matching and Path Prediction
 
 ## Overview
-This project uses AI to solve two core navigation problems for vehicle fleets (such as delivery trucks or taxis):
+This project uses RL/IL to solve two core navigation problems for vehicle fleets (such as delivery trucks or taxis):
 1. **Map Matching:** Converting noisy, imprecise raw GPS coordinates into the exact street segments a vehicle actually drove on.
 2. **Path Prediction:** Predicting where the vehicle is heading next based on its current route.
 
 ### What Makes This Different?
 Traditional map-matching systems usually rely strictly on geometry (snapping GPS points to the nearest road using Hidden Markov Models) or require millions of human-labeled routes to train an AI model.
 
-This project trains an AI to understand road networks and vehicle movement **without any human labels or pre-matched training data** (label-free self-supervised learning), while using a latent world model over a vectorized road-network graph.
+This project trains an RL/IL to understand road networks and vehicle movement **without any human labels or pre-matched training data** (label-free self-supervised learning), while using a latent world model over a vectorized road-network graph.
 
 > **Project Goal:** This is a **practical engineering log**, not an academic paper defense. It includes every real-world test result—including negative results—to document what actually works in production.
 
 ---
 
-## Key Findings: AI vs. Math
+## Key Findings: RL/IL vs. Math
 
 After testing on over 1.66 million Porto taxi routes (plus cross-city evaluation on Beijing and Hannover datasets), the core finding is clear:
 
-* **AI alone loses to standard math:** A purely AI-driven model made more map-matching errors than standard geometry-based algorithms.
-* **AI + Math wins:** Combining AI predictions with classic geometric algorithms produces a hybrid system that outperforms every single baseline.
+* **RL alone loses to standard math:** A purely RL-driven model made more map-matching errors than standard geometry-based algorithms.
+* **RL + Math wins:** Combining RL predictions with classic geometric algorithms produces a hybrid system that outperforms every single baseline.
 
 ### System Performance Breakdown
 

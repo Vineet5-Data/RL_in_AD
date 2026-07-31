@@ -4,3 +4,6 @@ ckpt*/
 __pycache__/
 *.pyc
 .serena/cache/
+.claude/
+.worktrees/
+rtk/

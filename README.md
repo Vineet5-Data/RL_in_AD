@@ -16,7 +16,7 @@ This project trains an AI to understand road networks and vehicle movement **wit
 
 ## Key Findings: AI vs. Math
 
-After ~3 months of testing on over 1.66 million Porto taxi routes (plus cross-city evaluation on Beijing and Hannover datasets), the core finding is clear:
+After testing on over 1.66 million Porto taxi routes (plus cross-city evaluation on Beijing and Hannover datasets), the core finding is clear:
 
 * **AI alone loses to standard math:** A purely AI-driven model made more map-matching errors than standard geometry-based algorithms.
 * **AI + Math wins:** Combining AI predictions with classic geometric algorithms produces a hybrid system that outperforms every single baseline.

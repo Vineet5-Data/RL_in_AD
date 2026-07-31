@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "UniTraj: Learning a Universal Trajectory Foundation Model from Billion-Scale Worldwide Traces",
+    "authors": ["Yuanshao Zhu", "et al."],
+    "affiliation": "not fully confirmed from abstract page",
+    "venue": {"type": "conference", "name": "NeurIPS 2025; arXiv 2024", "year": 2024},
+    "link": "https://arxiv.org/abs/2411.03859",
+    "code_available": "not confirmed"
+  },
+  "method": {
+    "task": "trajectory_foundation_model_pretraining",
+    "input_representation": "raw_GPS_point_sequences",
+    "sequence_model": "transformer_foundation_model",
+    "training_signal": "self_supervised (Adaptive Trajectory Resampling + Self-supervised Trajectory Masking)",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A (representation model, no matching/RL decision step)",
+    "notes": "Pretrained on WorldTrace: 2.45M trajectories, billions of GPS points, 70 countries. Attributes zero-shot robustness across regions/tasks to DATA DIVERSITY plus resampling/masking pretext tasks, not parameter count. Key evidence in run2_capacity_diagnosis_and_scaling_review.md that the trajectory-domain frontier scales data and self-supervised signal design first, parameters second — matching the run-2 diagnosis ordering (data headroom and signal ceiling above raw capacity). Also directly relevant to the OOD/multi-city product goal (practical_roadmap.md item 2)."
+  },
+  "gap_analysis": {
+    "pillars_covered": ["P3 (self-supervised on raw GPS)", "P1a (partial — transformer over trajectories)"],
+    "whats_missing": "No map matching, no road graph integration, no RL/world-model decision step — pure representation learning (same class as START/JCLRNT).",
+    "novelty_vs_recombination": "partial_overlap",
+    "novelty_reasoning": "Strong P3 neighbor at foundation-model scale; does not pre-empt matching or P2, but sets the modern bar for label-free trajectory pretraining."
+  },
+  "relevance": {
+    "proximity": "core_neighbor",
+    "bmw_relevance": "Direct: the data-diversity-first recipe is the template for multi-city generalization of the fleet matcher; WorldTrace-scale pretraining is a candidate upstream for per-city onboarding."
+  },
+  "uncertain": [
+    "Author list/affiliations not fully verified (abstract-level pass 2026-07-11); WorldTrace dataset licensing/availability unchecked."
+  ]
+}

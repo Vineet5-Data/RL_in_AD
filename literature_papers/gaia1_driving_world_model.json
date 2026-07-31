@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "GAIA-1: A Generative World Model for Autonomous Driving",
+    "authors": ["Anthony Hu", "Lloyd Russell", "Hudson Yeo", "et al."],
+    "affiliation": "Wayve",
+    "venue": {"type": "preprint", "name": "arXiv", "year": 2023},
+    "link": "https://arxiv.org/abs/2309.17080",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "generative_world_model_driving",
+    "input_representation": "video_text_action",
+    "sequence_model": "autoregressive_transformer_over_discrete_video_tokens",
+    "training_signal": "self_supervised_next_token_video",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A (generation/simulation, no RL policy)",
+    "notes": "~9B-parameter world model for driving video; reports emergent scene understanding and LLM-like scaling behavior. Cited as domain-adjacent evidence that the world-model FAMILY scales when the training signal is rich (dense video prediction) — contrast with this project's pseudo-label matching objective near its entropy floor, where capacity alone cannot buy the same gains."
+  },
+  "gap_analysis": {
+    "pillars_covered": ["P2 (inspires only; wrong modality)"],
+    "whats_missing": "Video generation for simulation, not GPS-to-segment matching; no road graph, no discrete segment actions.",
+    "novelty_vs_recombination": "real_gap",
+    "novelty_reasoning": "Same class as Think2Drive/DreamerV3 — inspiration for P2 scaling, wrong task framing."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Adjacent automotive-industry world-model precedent (Wayve); shows where the driving industry is investing on the scaling axis."
+  },
+  "uncertain": [
+    "Cited from prior knowledge of the paper; not re-fetched during the 2026-07-11 review pass."
+  ]
+}

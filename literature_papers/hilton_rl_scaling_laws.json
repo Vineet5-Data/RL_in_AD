@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "Scaling Laws for Single-Agent Reinforcement Learning",
+    "authors": ["Jacob Hilton", "Jie Tang", "John Schulman"],
+    "affiliation": "OpenAI",
+    "venue": {"type": "preprint", "name": "arXiv", "year": 2023},
+    "link": "https://arxiv.org/abs/2301.13442",
+    "code_available": "not mentioned"
+  },
+  "method": {
+    "task": "RL_scaling_characterization",
+    "input_representation": "N/A",
+    "sequence_model": "N/A",
+    "training_signal": "RL_reward",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Mean episode return does not vary smoothly with scale, so introduces INTRINSIC PERFORMANCE (minimum compute to reach a given return across a model family), which scales as a power law in model size and environment interactions on Procgen, 1v1 Dota 2, and MNIST-horizon toys. Optimal model size scales as a power law in compute budget, and optimal RL model sizes are SMALLER than supervised intuition suggests at a given compute level — relevant caution against reflexively scaling the P2 world model."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or world-model paper; methodology reference for RL model sizing.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited for the smaller-than-expected optimal RL model size and the intrinsic-performance construction."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect: sizing guidance for any future P2/actor scale-up."
+  },
+  "uncertain": [
+    "Environments are on-policy game/procgen domains; transfer of coefficients to imagination-trained world-model RL over road graphs unverified."
+  ]
+}

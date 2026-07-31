@@ -1,0 +1,37 @@
+{
+  "basic_info": {
+    "title": "Jukebox: A Generative Model for Music",
+    "authors": ["Prafulla Dhariwal", "Heewoo Jun", "Christine Payne", "Jong Wook Kim", "Alec Radford", "Ilya Sutskever"],
+    "affiliation": "OpenAI",
+    "venue": {
+      "type": "preprint/technical report",
+      "name": "arXiv preprint (2020)",
+      "year": 2020
+    },
+    "link": "https://arxiv.org/abs/2005.00341",
+    "code_available": "yes (github.com/openai/jukebox)"
+  },
+  "method": {
+    "task": "discrete_latent_bottleneck_training_heuristic",
+    "input_representation": "raw audio waveform (hierarchical VQ-VAE)",
+    "sequence_model": "hierarchical VQ-VAE + autoregressive transformer prior (bottleneck heuristic is bottleneck-agnostic)",
+    "training_signal": "reconstruction + codebook usage tracking with random-restart heuristic",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Introduces (and popularizes) 'random restarts': track a running EMA of each codebook vector's usage rate; whenever a vector's usage falls below a threshold, RESET it (not to random noise, but to a randomly chosen ENCODER OUTPUT from the current batch, i.e. a live data-driven value). This directly revives dead/underused codes without any extra gradient-based loss term, and the paper reports it reaches the same asymptotic codebook utilization as training without restarts but MUCH faster (fewer steps to full utilization). This is the standard 'dead-code revival' precedent requested under gap (a). IMPORTANT CAVEAT for the project's exact setup: random restarts are designed for a VQ codebook (a shared discrete dictionary looked up by nearest-neighbor), whereas the project's categorical RSSM groups are INDEPENDENT softmax distributions over fixed class indices (no shared codebook, no nearest-neighbor lookup) -- so 'resetting a dead code to a live encoder output' has no direct analogue. The closer analogue for a dead categorical GROUP (not a dead CODE within a group) would be periodically re-initializing that group's posterior-network output layer weights (or its prior-network branch) toward a live-data-derived distribution when its running kl_act stays below the free-bits floor for many steps -- an untested, project-specific adaptation, not a direct port."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or RL paper -- cited as the canonical worked example of dead-code revival requested under literature gap (a).",
+    "novelty_vs_recombination": "N/A (engineering heuristic precedent)",
+    "novelty_reasoning": "Clarifies that the well-known 'dead-code revival' literature (Jukebox, EMA-reset, NSVQ, SQ-VAE) is specifically about shared VQ CODEBOOKS, a structurally different object from the project's independent per-group DreamerV3 categoricals -- so none of these techniques port over cheaply as-is; they inform the DIRECTION (periodic revival of specific under-used latent structure) but not a drop-in implementation."
+  },
+  "relevance": {
+    "proximity": "wm_latent_underutilization_literature_gap",
+    "bmw_relevance": "Not BMW-relevant; logged to explain why 'dead-code revival' techniques from the VQ-VAE literature do not map cleanly onto DreamerV3-style categorical RSSM groups, closing out literature gap (a) as 'no cheap direct port available'."
+  },
+  "uncertain": [
+    "No evidence found of random-restart-style revival being applied specifically to independent (non-shared-codebook) categorical RSSM groups in any DreamerV2/V3-lineage paper as of this search."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "Training Compute-Optimal Large Language Models (Chinchilla)",
+    "authors": ["Jordan Hoffmann", "Sebastian Borgeaud", "Arthur Mensch", "et al."],
+    "affiliation": "DeepMind",
+    "venue": {"type": "conference", "name": "NeurIPS 2022", "year": 2022},
+    "link": "https://arxiv.org/abs/2203.15556",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "compute_optimal_scaling",
+    "input_representation": "N/A",
+    "sequence_model": "transformer_LM",
+    "training_signal": "self_supervised_next_token",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Revises Kaplan allocation: model size N and data D should scale EQUALLY with compute; optimum near ~20 tokens/parameter. Most large models were oversized for their data. Loss fits include an explicit irreducible term E. Applied in run2_capacity_diagnosis_and_scaling_review.md: 2.6M params vs ~8.2M unique fixes (~50M fix-visits) is near/above the data-per-parameter optimum, arguing the current WM is not parameter-starved relative to its data — growing N without D moves away from optimum."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching paper; methodology reference for capacity/data sizing only.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited for the equal-scaling result and the irreducible-error term in scaling fits."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect: 'data before parameters' ordering for per-city retraining cost decisions."
+  },
+  "uncertain": [
+    "20 tokens/param constant is LM-specific; direction (data-first) assumed transferable to GPS-fix sequence modeling, magnitude not."
+  ]
+}

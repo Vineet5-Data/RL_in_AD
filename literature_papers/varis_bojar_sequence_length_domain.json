@@ -1,0 +1,31 @@
+{
+  "basic_info": {
+    "title": "Sequence Length is a Domain: Length-based Overfitting in Transformer Models",
+    "authors": ["Dušan Variš", "Ondřej Bojar"],
+    "affiliation": "Charles University",
+    "venue": {"type": "conference", "name": "EMNLP 2021", "year": 2021},
+    "link": "https://arxiv.org/abs/2109.07276",
+    "code_available": "not mentioned"
+  },
+  "method": {
+    "task": "length_generalization_analysis",
+    "input_representation": "N/A",
+    "sequence_model": "transformer",
+    "training_signal": "supervised_seq2seq",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Shows transformers overfit to the sequence-length distribution seen in training — length behaves as a domain of its own. Grounds this project's L=16->64 curriculum switch as necessary (not optional), and supports the review's literature-consistent extensions: multi-stage length schedules (16->32->64->128) with LR RE-WARMING at each stage boundary instead of one global cosine spanning all stages (the observed dead-LR tail in Run-2-XL is an artifact of the single-cosine choice)."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "NMT domain; methodology reference for length-curriculum design only.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited for length-as-domain evidence behind the curriculum design."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect."
+  },
+  "uncertain": []
+}

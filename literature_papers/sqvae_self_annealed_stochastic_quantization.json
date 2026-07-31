@@ -1,0 +1,37 @@
+{
+  "basic_info": {
+    "title": "SQ-VAE: Variational Bayes on Discrete Representation with Self-annealed Stochastic Quantization",
+    "authors": ["Yuhta Takida", "Takashi Shibuya", "Weihsiang Liao", "Chieh-Hsin Lai", "Junki Ohmura", "Toshimitsu Uesaka", "Naoki Murata", "Shusuke Takahashi", "Toshiyuki Kumakura", "Yuki Mitsufuji"],
+    "affiliation": "Sony AI / Sony Group Corporation",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Machine Learning (ICML 2022)",
+      "year": 2022
+    },
+    "link": "https://arxiv.org/abs/2205.07547",
+    "code_available": "yes (github.com/sony/sqvae)"
+  },
+  "method": {
+    "task": "discrete_latent_bottleneck_design",
+    "input_representation": "generic (images, speech)",
+    "sequence_model": "N/A (bottleneck design)",
+    "training_signal": "variational (Gaussian dequantization/quantization with a learned, ANNEALING variance instead of a fixed free-bits/commitment hinge)",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Diagnoses standard VQ-VAE codebook collapse as a consequence of ad hoc training heuristics (straight-through estimator + commitment loss + EMA updates), and replaces them with a single principled variational objective in which quantization is STOCHASTIC (soft assignment) early in training and 'self-anneals' toward deterministic hard quantization as training progresses -- the variance/temperature of the quantization noise is itself a learned parameter that shrinks automatically, rather than a hand-scheduled or fixed hyperparameter. This is the clearest available precedent for '(b) an adaptive/scheduled alternative to a FIXED threshold' in a categorical/discrete-latent bottleneck: instead of a fixed 1-nat-per-group free-bits floor, an analogous self-annealed scheme would let the effective free-bits floor per group start loose (encouraging exploration/ use of many groups) and tighten (or loosen, symmetrically) based on a learned per-group scale rather than a global constant. Adapting this cheaply to the exact setup (straight-through categorical RSSM, unimix already present) would mean: replace the fixed free-bits scalar with a per-group learned temperature/scale that is optimized jointly (e.g. via a small auxiliary loss term keeping it well-behaved), NOT changing model capacity, NOT requiring new data. This is the single most literature-grounded 'adaptive free bits' mechanism found, though the paper's own instantiation is for Gaussian-based dequantization, not softmax-categorical straight-through, so the categorical-group version would need a first-principles re-derivation rather than a direct port."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching or RL paper -- a discrete-bottleneck-training-methodology precedent for literature gap (b), adaptive/scheduled free-bits alternatives, requested 2026-07-26.",
+    "novelty_vs_recombination": "N/A (methodology precedent)",
+    "novelty_reasoning": "Directly answers the literature-gap question 'is there post-hoc/adaptive free-bits work' with the closest documented mechanism (self-annealing variance in place of a fixed KL/commitment floor), predating DreamerV3 but addressing exactly the class of fixed-floor problem DreamerV3's free bits also has."
+  },
+  "relevance": {
+    "proximity": "wm_latent_underutilization_literature_gap",
+    "bmw_relevance": "Not BMW-relevant; logged as the strongest candidate mechanism for an adaptive-free-bits experiment on the categorical RSSM if the pseudo-label signal-ceiling fix (higher literature priority) does not resolve kl_act pinning."
+  },
+  "uncertain": [
+    "No published adaptation of SQ-VAE's self-annealing mechanism to a DreamerV3-style straight-through categorical RSSM (with KL balancing + unimix) was found as of this search -- this would be a novel combination, not an off-the-shelf technique to import."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "MoveGPT / TrajMoE: Scaling Mobility Foundation Models with Spatially-Aware Mixture of Experts",
+    "authors": ["not fully confirmed from abstract page"],
+    "affiliation": "not fully confirmed",
+    "venue": {"type": "preprint", "name": "arXiv (v1 titled TrajMoE, v2 MoveGPT)", "year": 2025},
+    "link": "https://arxiv.org/abs/2505.18670",
+    "code_available": "not confirmed"
+  },
+  "method": {
+    "task": "mobility_foundation_model_pretraining",
+    "input_representation": "human_mobility_trajectories (location sequences)",
+    "sequence_model": "transformer_with_spatially_aware_MoE",
+    "training_signal": "self_supervised",
+    "graph_integration": "none (location units, notes fragmentation of basic units as key obstacle)",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Scales mobility foundation models across cities via spatially-aware mixture-of-experts; identifies inconsistent movement units (raw GPS vs non-transferable zone IDs) as THE obstacle to cross-city pretraining and geographic scalability. Cited with UniTraj as evidence that mobility-domain scaling wins come from data/coverage and unit design, not raw parameter growth — supporting the data-first ordering in run2_capacity_diagnosis_and_scaling_review.md."
+  },
+  "gap_analysis": {
+    "pillars_covered": ["P3 (self-supervised mobility pretraining)"],
+    "whats_missing": "Human-mobility prediction, not GPS-to-road-segment matching; no road graph, no world model, no RL.",
+    "novelty_vs_recombination": "partial_overlap",
+    "novelty_reasoning": "Adjacent scaling evidence; the cross-city unit-consistency problem it names is exactly what a road-graph-anchored representation (this project's P1b) sidesteps."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect: MoE-across-cities is a candidate pattern if per-city retraining cost becomes the binding product constraint."
+  },
+  "uncertain": [
+    "Authors/venue not verified beyond arXiv listing (2026-07-11 search pass); v1/v2 naming (TrajMoE vs MoveGPT) suggests in-flight revisions."
+  ]
+}

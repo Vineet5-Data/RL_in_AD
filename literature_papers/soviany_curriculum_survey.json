@@ -1,0 +1,31 @@
+{
+  "basic_info": {
+    "title": "Curriculum Learning: A Survey",
+    "authors": ["Petru Soviany", "Radu Tudor Ionescu", "Paolo Rota", "Nicu Sebe"],
+    "affiliation": "University of Bucharest / University of Trento",
+    "venue": {"type": "journal", "name": "International Journal of Computer Vision (2022); arXiv 2021", "year": 2022},
+    "link": "https://arxiv.org/abs/2101.10382",
+    "code_available": "N/A (survey)"
+  },
+  "method": {
+    "task": "curriculum_learning_survey",
+    "input_representation": "N/A",
+    "sequence_model": "N/A",
+    "training_signal": "supervised_and_self_supervised",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "General (non-RL-specific) curriculum-learning survey: difficulty-ordered data/subset scheduling to stabilize and accelerate training, including sequence-length-based difficulty measures for sequence models. Complements narvekar_curriculum_rl_survey.json on the supervised/self-supervised side of this project's pipeline."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Survey; no map-matching content.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited alongside Narvekar for curriculum grounding; adds the supervised/SSL perspective."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect."
+  },
+  "uncertain": []
+}

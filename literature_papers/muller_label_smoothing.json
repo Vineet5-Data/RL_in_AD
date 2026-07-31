@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "When Does Label Smoothing Help?",
+    "authors": ["Rafael Müller", "Simon Kornblith", "Geoffrey Hinton"],
+    "affiliation": "Google Brain",
+    "venue": {"type": "conference", "name": "NeurIPS 2019", "year": 2019},
+    "link": "https://arxiv.org/abs/1906.02629",
+    "code_available": "not mentioned"
+  },
+  "method": {
+    "task": "soft_target_training_analysis",
+    "input_representation": "N/A",
+    "sequence_model": "N/A",
+    "training_signal": "supervised_with_soft_targets",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Analyzes training against soft (smoothed) target distributions. Cited for the mechanism that cross-entropy against soft targets is bounded below by the entropy of the target distribution itself — minimum CE = H(target) > 0. Applied to Run-2-XL: the road head trains on Change-9 geometry-derived SOFT pseudo-labels, so its train CE plateau at ~1.36 nats may be at/near an irreducible pseudo-label entropy floor rather than evidence of insufficient capacity. The floor has never been measured (probe P0b: log H(soft_target) per batch)."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching paper; methodology reference for the CE-floor argument.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited for the entropy-floor property of soft-target CE, central to the label-free signal-ceiling diagnosis."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect."
+  },
+  "uncertain": [
+    "Paper's focus is label smoothing's effects on calibration/distillation; the entropy-floor property is elementary information theory the paper exemplifies rather than its headline claim."
+  ]
+}

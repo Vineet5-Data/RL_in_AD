@@ -1,0 +1,37 @@
+{
+  "basic_info": {
+    "title": "Preventing Posterior Collapse with delta-VAEs",
+    "authors": ["Ali Razavi", "Aaron van den Oord", "Ben Poole", "Oriol Vinyals"],
+    "affiliation": "DeepMind / Google Brain",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Learning Representations (ICLR 2019)",
+      "year": 2019
+    },
+    "link": "https://arxiv.org/abs/1901.03416",
+    "code_available": "not confirmed from abstract/paper pages reviewed"
+  },
+  "method": {
+    "task": "VAE_training_objective_design",
+    "input_representation": "sequence_or_image (text and image benchmarks in paper)",
+    "sequence_model": "VAE_generic / autoregressive-decoder VAE",
+    "training_signal": "constrained variational family (committed-rate constraint) instead of a free-bits hinge",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Root-causes posterior collapse to the FAMILY of posteriors being optimized, not just the objective: if q(z|x) can always sneak arbitrarily close to the prior, no free-bits hinge fully prevents the optimizer finding that degenerate solution. Fix: constrain the (per-dimension) variational family so that q(z|x) is ANALYTICALLY guaranteed to keep at least delta nats of KL from the prior for every dimension, regardless of what the encoder learns -- e.g. by lower-bounding the posterior mean's distance from the prior mean or upper-bounding posterior variance, rather than adding a max(KL, free_bits) hinge on top of an unconstrained family. This directly targets the SAME failure mode as the fixed 1-nat/group free-bits floor in the project's recipe, but structurally rather than via a loss-side hinge -- i.e. it is a genuinely different mechanism (constrained family) from '(b) adaptive/scheduled free-bits threshold' in the sense that delta is fixed-but-structurally-enforced rather than scheduled, though the delta-per-dimension framing is the most direct known precedent for 'per-group KL floor tuning' in categorical/Gaussian latents. Cheap adaptation to a straight-through categorical RSSM is NOT free: the paper's construction is derived for Gaussian/exponential-family posteriors with an explicit parametric distance-from-prior guarantee; porting the same GUARANTEE to a categorical posterior with unimix would require re-deriving the constraint (e.g. bounding min category probability away from the unimix floor) rather than just changing a scalar hyperparameter."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching paper -- a Stage-2/world-model training-methodology precedent for the specific literature gap 'adaptive or structurally-enforced alternatives to a fixed free-bits floor', requested in the 2026-07-26 kl_act ablation follow-up.",
+    "novelty_vs_recombination": "N/A (methodology precedent)",
+    "novelty_reasoning": "Relevant as the closest known precedent to 'a fixed per-group floor is being gamed/saturated by all-but-one group' -- delta-VAE's diagnosis (the posterior family itself can always collapse under an unconstrained hinge) is a plausible alternative explanation for why kl_act stays pinned at ~1 group regardless of width, independent of the pseudo-label signal-ceiling hypothesis."
+  },
+  "relevance": {
+    "proximity": "wm_latent_underutilization_literature_gap",
+    "bmw_relevance": "Not BMW-relevant; logged as a candidate mechanism (constrained posterior family vs. hinge-based free bits) to explain kl_act pinning at ~1 active group in the 2026-07-26 16-vs-32-group ablation."
+  },
+  "uncertain": [
+    "Whether the delta-VAE constraint composes cleanly with unimix (which already enforces a categorical floor via uniform mixing, a related but distinct mechanism) has not been checked against the full paper text -- flagged for a closer read before treating this as directly implementable."
+  ]
+}

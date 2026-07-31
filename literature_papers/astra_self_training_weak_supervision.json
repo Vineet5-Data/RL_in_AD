@@ -1,0 +1,37 @@
+{
+  "basic_info": {
+    "title": "Self-Training with Weak Supervision (ASTRA)",
+    "authors": ["Giannis Karamanolakis", "Subhabrata Mukherjee", "Guoqing Zheng", "Ahmed Hassan Awadallah"],
+    "affiliation": "Columbia University / Microsoft Research",
+    "venue": {
+      "type": "conference",
+      "name": "NAACL-HLT 2021",
+      "year": 2021
+    },
+    "link": "https://arxiv.org/abs/2104.05514",
+    "code_available": "yes (github.com/microsoft/ASTRA)"
+  },
+  "method": {
+    "task": "weakly_supervised_sequence_labeling_self_training",
+    "input_representation": "text sequences (task-agnostic student/teacher framework)",
+    "sequence_model": "student network (task model) + teacher 'rule attention network'",
+    "training_signal": "iterative self-training: student predicts pseudo-labels on unlabeled data; a teacher network learns to RE-WEIGHT/aggregate the student's pseudo-labels against noisy weak-supervision-rule labels, conditioned on per-instance rule fidelity and context, producing a sharper aggregated soft label that is fed back to retrain the student",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "iterative EM-style co-training loop (student <-> teacher), not one-shot",
+    "notes": "Directly addresses gap (c): iterative refinement of noisy/soft weak-supervision labels via a learned teacher that reweights and sharpens student pseudo-labels round over round, explicitly built for sequence labeling under noisy weak rules (structurally analogous to geometry-derived soft pseudo-labels for road CE). Reports meaningful accuracy gains over static (non-iterative) pseudo-labeling and over training on raw weak-rule labels directly, on multiple weak-supervision NLP benchmarks including sequence tagging. Cheap adaptation to the project's exact setup: rather than a full learned rule-attention teacher network, the CHEAPEST version of the same idea is (i) run one extra pass generating road-CE targets from the CURRENT trained model's own predictions blended with the existing geometry-derived soft labels (self-distillation round), and/or (ii) apply confidence-based temperature sharpening (lower the softmax temperature on the geometry-derived soft labels, or threshold-and-renormalize away low-confidence probability mass) BEFORE computing road CE, raising the target distribution's peakiness (lowering its entropy floor) without any new data or larger model. This requires no architecture change, only a preprocessing/loss-target change to the existing road-CE pipeline."
+  },
+  "gap_analysis": {
+    "pillars_covered": ["P3"],
+    "whats_missing": "Not a map-matching or graph-integration paper -- an NLP self-training methodology precedent, directly relevant to P3 (label-free training) as a technique for raising the effective information content of self-supervised pseudo-labels, requested under literature gap (c).",
+    "novelty_vs_recombination": "N/A (training-methodology precedent, not a pillar novelty anchor)",
+    "novelty_reasoning": "Confirms iterative pseudo-label sharpening/reweighting is an established, non-trivial lever (not just 'lower temperature once') in weakly-supervised sequence labeling -- directly actionable for raising the road-CE signal ceiling that ranks #2 in the project's own bottleneck hypothesis ranking, ahead of latent-width changes."
+  },
+  "relevance": {
+    "proximity": "wm_label_free_training_signal_ceiling",
+    "bmw_relevance": "Not BMW-relevant; logged as the primary literature support for 'sharpen/iteratively-refine the geometry-derived soft pseudo-labels' as the next experiment for the Stage-2 world model's road-CE signal ceiling."
+  },
+  "uncertain": [
+    "ASTRA's full teacher network is heavier machinery than likely justified for a first experiment -- the minimal-viable version (temperature sharpening / confidence thresholding of existing soft labels, or one self-distillation round) is an extrapolation from ASTRA's principle, not something the paper itself tests in this exact minimal form."
+  ]
+}

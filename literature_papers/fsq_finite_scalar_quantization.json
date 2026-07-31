@@ -1,0 +1,37 @@
+{
+  "basic_info": {
+    "title": "Finite Scalar Quantization: VQ-VAE Made Simple",
+    "authors": ["Fabian Mentzer", "David Minnen", "Eirikur Agustsson", "Michael Tschannen"],
+    "affiliation": "Google DeepMind / Google Research",
+    "venue": {
+      "type": "conference",
+      "name": "International Conference on Learning Representations (ICLR 2024)",
+      "year": 2023
+    },
+    "link": "https://arxiv.org/abs/2309.15505",
+    "code_available": "yes (official JAX/PyTorch snippets in paper + community ports)"
+  },
+  "method": {
+    "task": "discrete_latent_bottleneck_design",
+    "input_representation": "generic (images, depth, panoptic maps in paper; architecture-agnostic)",
+    "sequence_model": "N/A (bottleneck design, not a sequence model)",
+    "training_signal": "supervised/self-supervised reconstruction or downstream task loss (bottleneck-agnostic)",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Replaces a learned VQ codebook with a fixed per-dimension scalar quantizer: project to a small number of dims (e.g. 5-10), round each independently to one of a small fixed set of values (e.g. {-1,0,1}), giving an implicit codebook of size = product of per-dim levels, with straight-through gradients through the rounding op exactly as in standard STE-VQ. Because every dimension is quantized independently to values that already span its full range, there is no learned codebook to collapse -- no commitment loss, no EMA codebook update, no code-splitting/reset heuristics, no entropy penalty are needed; full codebook utilization is obtained 'by construction'. Matches VQ-VAE-level reconstruction/downstream quality at comparable effective vocabulary size with a much simpler training recipe. NOTE: this is a discretization-scheme paper, not a categorical-RSSM paper -- it targets VQ-style codebooks, not DreamerV3-style independent per-group softmax categoricals with a fixed free-bits floor. Relevant to our project only as an architectural alternative (replace the KL-regularized categorical groups with FSQ-style fixed scalar bins) if free-bits/unimix tuning is abandoned -- NOT a drop-in fix for the current recipe, since it removes the KL term (and therefore free bits / KL balancing / unimix) entirely rather than adjusting it."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching, RL, or world-model paper -- cited purely as a dead-code/collapse-avoidance precedent for categorical/discrete latent bottlenecks, one of three literature gaps (VQ-style dead-code revival) explicitly requested in a 2026-07-26 research task on WM latent under-utilization.",
+    "novelty_vs_recombination": "N/A (engineering-design precedent, not a novelty anchor for the four-pillar system)",
+    "novelty_reasoning": "Useful as context for why our current failure mode (dead categorical GROUPS under a KL floor) differs structurally from classic VQ-VAE dead-CODE collapse: FSQ sidesteps codebook collapse by removing the learned-codebook + KL machinery altogether, which is a much larger architecture change than anything justified by the current kl_act evidence."
+  },
+  "relevance": {
+    "proximity": "wm_latent_underutilization_literature_gap",
+    "bmw_relevance": "Not BMW-relevant; logged as the 'discretization redesign' end of the spectrum of options for the kl_act~1-active-group finding, to be weighed against cheaper in-place fixes (per-group free-bits floor lowering, adaptive/scheduled free bits, pseudo-label sharpening) before considering any bottleneck redesign."
+  },
+  "uncertain": [
+    "Not verified from a full read whether FSQ has been combined with DreamerV3-style RSSM dynamics/representation losses (KL balancing) in any published work as of 2026-07 -- searches did not surface such a combination; treat as an untested architectural direction, not a validated fix for RSSM collapse specifically."
+  ]
+}

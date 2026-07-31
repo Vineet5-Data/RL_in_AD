@@ -1,0 +1,31 @@
+{
+  "basic_info": {
+    "title": "Curriculum Learning for Reinforcement Learning Domains: A Framework and Survey",
+    "authors": ["Sanmit Narvekar", "Bei Peng", "Matteo Leonetti", "Jivko Sinapov", "Matthew E. Taylor", "Peter Stone"],
+    "affiliation": "UT Austin et al.",
+    "venue": {"type": "journal", "name": "Journal of Machine Learning Research 21", "year": 2020},
+    "link": "https://arxiv.org/abs/2003.04960",
+    "code_available": "N/A (survey)"
+  },
+  "method": {
+    "task": "curriculum_RL_survey",
+    "input_representation": "N/A",
+    "sequence_model": "N/A",
+    "training_signal": "RL",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Canonical framework/survey for sequencing tasks or data into curricula when the target task is too hard to learn directly. Grounds this project's staged pipeline (stage0/stage1 self-supervised pretrain -> stage2r WM -> optional stage3 actor) and the L=16->64 sequence-length curriculum as established practice rather than ad-hoc choices."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Survey; no map-matching content.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited to situate the project's staged/curriculum training in established literature."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect."
+  },
+  "uncertain": []
+}

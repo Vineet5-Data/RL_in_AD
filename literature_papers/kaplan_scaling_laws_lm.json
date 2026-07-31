@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "Scaling Laws for Neural Language Models",
+    "authors": ["Jared Kaplan", "Sam McCandlish", "Tom Henighan", "Tom B. Brown", "et al."],
+    "affiliation": "OpenAI / Johns Hopkins",
+    "venue": {"type": "preprint", "name": "arXiv", "year": 2020},
+    "link": "https://arxiv.org/abs/2001.08361",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "scaling_law_characterization",
+    "input_representation": "N/A",
+    "sequence_model": "transformer_LM",
+    "training_signal": "self_supervised_next_token",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Establishes that LM cross-entropy loss scales as a power law in model size N, dataset size D, and compute C over 7+ orders of magnitude, with weak dependence on architectural shape at fixed N. Foundation for all model-sizing arguments. Used in run2_capacity_diagnosis_and_scaling_review.md to frame the N-vs-D allocation question for the 2.6M-param decoder-light WM on 8.2M Porto fixes."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching paper; methodology reference for capacity/data sizing only.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited for the power-law form of loss-vs-scale; coefficients are LM-specific and do not transfer directly (see pearce_agent_world_model_scaling.json)."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect: informs whether per-city retraining budgets should buy parameters or data."
+  },
+  "uncertain": [
+    "Superseded on compute-optimal allocation by Chinchilla (hoffmann_chinchilla_compute_optimal.json); Kaplan's original N-heavy allocation is known to be off."
+  ]
+}

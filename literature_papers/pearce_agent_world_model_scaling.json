@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "Scaling Laws for Pre-training Agents and World Models",
+    "authors": ["Tim Pearce", "Tabish Rashid", "Dave Bignell", "Raluca Georgescu", "Sam Devlin", "Katja Hofmann"],
+    "affiliation": "Microsoft Research",
+    "venue": {"type": "preprint", "name": "arXiv", "year": 2024},
+    "link": "https://arxiv.org/abs/2411.04434",
+    "code_available": "not mentioned"
+  },
+  "method": {
+    "task": "world_model_and_BC_scaling_characterization",
+    "input_representation": "embodied_agent_observations (robotics, video games)",
+    "sequence_model": "generative_pretraining_transformers",
+    "training_signal": "self_supervised_generative",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Confirms LM-style power laws (loss vs optimal model size etc.) DO arise in world modeling and imitation learning, BUT the coefficients are heavily influenced by tokenizer, task, and architecture — uniform LLM rules of thumb mis-size agentic models. Key implication used in run2_capacity_diagnosis_and_scaling_review.md: sizing decisions for the decoder-light WM must come from a measured LOCAL scaling probe (P1/P2), not borrowed constants."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Embodied robotics/video-game domains, not GPS map matching; methodology reference only.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Closest published bridge between LLM scaling laws and world-model training; justifies running local probes instead of trusting Chinchilla constants."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect: methodological basis for P1-P3 probe design."
+  },
+  "uncertain": [
+    "Abstract-level verification only (2026-07-11 WebFetch); per-domain coefficient tables not independently checked."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "basic_info": {
+    "title": "Deep Learning Scaling is Predictable, Empirically",
+    "authors": ["Joel Hestness", "Sharan Narang", "Newsha Ardalani", "et al."],
+    "affiliation": "Baidu Research",
+    "venue": {"type": "preprint", "name": "arXiv", "year": 2017},
+    "link": "https://arxiv.org/abs/1712.00409",
+    "code_available": "no"
+  },
+  "method": {
+    "task": "data_scaling_characterization",
+    "input_representation": "N/A",
+    "sequence_model": "multiple (MT, speech, vision)",
+    "training_signal": "supervised",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Pre-LLM evidence that generalization error follows power laws in training-set size across domains, with a plateau region at small data and an irreducible-error floor. Source of the DATA-SCALING ABLATION as the canonical 'model too small vs data-bound' discriminator: train the same model on {1/4, 1/2, 1x} data; improvement with data at fixed capacity = data-bound, saturation with high train loss = capacity- or signal-bound. Basis for experiment P1 in run2_capacity_diagnosis_and_scaling_review.md."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching paper; methodology reference for the data-scaling diagnostic only.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited for the diagnostic procedure, not for any domain result."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Direct procedural relevance: P1 data-scaling ablation (200k->400k->800k Porto trajs) follows this recipe."
+  },
+  "uncertain": []
+}

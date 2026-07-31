@@ -1,0 +1,31 @@
+{
+  "basic_info": {
+    "title": "Deep Double Descent: Where Bigger Models and More Data Hurt",
+    "authors": ["Preetum Nakkiran", "Gal Kaplun", "Yamini Bansal", "Tristan Yang", "Boaz Barak", "Ilya Sutskever"],
+    "affiliation": "Harvard / OpenAI",
+    "venue": {"type": "conference", "name": "ICLR 2020", "year": 2019},
+    "link": "https://arxiv.org/abs/1912.02292",
+    "code_available": "not mentioned"
+  },
+  "method": {
+    "task": "generalization_phenomenology",
+    "input_representation": "N/A",
+    "sequence_model": "CNNs_ResNets_transformers",
+    "training_signal": "supervised",
+    "graph_integration": "none",
+    "semantic_enrichment": "none",
+    "decision_paradigm": "N/A",
+    "notes": "Test error follows a double-descent curve in model size (and in training epochs): beyond the interpolation threshold, BIGGER models generalize better again. Practical import for this project: classical fear of overfitting is not a valid reason to keep the WM small — over-parameterization is typically benign in modern regimes; the realistic cost of a 2-5x wider model is wasted compute, not degraded accuracy."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Not a map-matching paper; methodology reference for capacity-vs-overfitting reasoning.",
+    "novelty_vs_recombination": "N/A (methodology precedent, not novelty anchor)",
+    "novelty_reasoning": "Cited to reject the overfitting counter-argument against capacity probes P2/P3."
+  },
+  "relevance": {
+    "proximity": "training_capacity_methodology_precedent",
+    "bmw_relevance": "Indirect."
+  },
+  "uncertain": []
+}

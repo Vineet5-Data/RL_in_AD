@@ -1,0 +1,33 @@
+{
+  "basic_info": {
+    "title": "Grab-Posisi: An Extensive Real-Life GPS Trajectory Dataset in Southeast Asia",
+    "authors": ["Xiaocheng Huang", "Yifang Yin", "Simon Lim", "et al."],
+    "affiliation": "Grab / NUS",
+    "venue": {"type": "workshop", "name": "SIGSPATIAL 2019, 3rd ACM SIGSPATIAL Workshop on Prediction of Human Mobility (PredictGIS)", "year": 2019},
+    "link": "https://dl.acm.org/doi/10.1145/3356995.3364536",
+    "code_available": "dataset (by request from Grab)"
+  },
+  "method": {
+    "task": "dataset_paper",
+    "input_representation": "raw_GPS_fixes (1s sampling, accuracy metadata, driving mode)",
+    "sequence_model": "N/A",
+    "training_signal": "N/A",
+    "graph_integration": "N/A",
+    "semantic_enrichment": "N/A",
+    "decision_paradigm": "N/A",
+    "notes": "Large real-life ride-hailing GPS corpus from Singapore and Jakarta: high-frequency (~1s) fixes with accuracy level, bearing, speed, phone-OS and car/motorcycle mode metadata. Named in the capacity review (P4/data-diversity axis) as a candidate additional corpus for cross-city data scaling alongside on-disk Porto/T-Drive/Geolife. NOT currently in data/ — acquisition requires request to Grab."
+  },
+  "gap_analysis": {
+    "pillars_covered": [],
+    "whats_missing": "Dataset only; no method.",
+    "novelty_vs_recombination": "N/A (data resource, not novelty anchor)",
+    "novelty_reasoning": "Tracked as a data-scaling resource for the P1 data ablation extension and OOD generalization work."
+  },
+  "relevance": {
+    "proximity": "data_resource",
+    "bmw_relevance": "Direct if multi-city generalization becomes a product commitment: dense SEA fleet GPS complements Porto (Europe) and T-Drive/Geolife (Beijing)."
+  },
+  "uncertain": [
+    "Exact author list and current dataset availability/licensing not re-verified (2026-07-11); access historically gated by Grab request form."
+  ]
+}

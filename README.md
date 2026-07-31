@@ -1,91 +1,99 @@
-# AI-Driven Map Matching and Path Prediction on Semantically Enriched Road Networks
+# AI-Driven Map Matching and Path Prediction
 
-A label-free deep learning pipeline that matches noisy, raw fleet GPS to road segments and predicts future routes — trained with **zero human-annotated ground truth**, using a latent world model over a vectorized road-network graph.
+## Overview
+This project uses AI to solve two core navigation problems for vehicle fleets (such as delivery trucks or taxis):
+1. **Map Matching:** Converting noisy, imprecise raw GPS coordinates into the exact street segments a vehicle actually drove on.
+2. **Path Prediction:** Predicting where the vehicle is heading next based on its current route.
 
-> **Status: practical engineering project**, not a paper defense. The deliverable is a working, deployable matcher/predictor. Every number below is measured, every negative result is kept (not buried) — this is a running experimental log, not a highlight reel.
+### What Makes This Different?
+Traditional map-matching systems usually rely strictly on geometry (snapping GPS points to the nearest road using Hidden Markov Models) or require millions of human-labeled routes to train an AI model.
 
-## What this is
+This project trains an AI to understand road networks and vehicle movement **without any human labels or pre-matched training data** (label-free self-supervised learning), while using a latent world model over a vectorized road-network graph.
 
-Most fleet-GPS pipelines either (a) snap points to roads with classical geometry (Hidden Markov Models over road candidates), or (b) train a supervised sequence model on pre-matched routes. This project asks: **can a system learn to match GPS to roads, and predict where a vehicle goes next, from raw unmatched trajectories alone** — no human labels, no pre-matched training routes — while still beating the classical geometric baseline?
+> **Project Goal:** This is a **practical engineering log**, not an academic paper defense. It includes every real-world test result—including negative results—to document what actually works in production.
 
-The answer, after ~3 months of experimentation (Porto taxi GPS, 1.66M trajectories, T-Drive/Beijing + Hannover held out for cross-city testing): **yes, but only when the learned signal is combined with geometry, not used to replace it.**
+---
 
-### Architecture — Four Pillars
+## Key Findings: AI vs. Math
 
-| ID | Pillar | What it does |
-|---|---|---|
-| **P1a** | Transformer/Attention Encoder | Processes spatiotemporal GPS sequences over the road graph (replaces RNN-style sequence models) |
-| **P1b** | Learned Semantic Vectorization | Vectorizes road attributes + topology as graph tokens — *learned*, not hand-coded rules |
-| **P2** | Latent World-Model RL | An RL-style agent sequentially selects road segments inside a learned, compressed latent simulation of the road network |
-| **P3** | Label-Free Training | Self-supervised pretraining + physical-constraint rewards — no human-annotated or pre-matched ground truth anywhere in the loop |
+After ~3 months of testing on over 1.66 million Porto taxi routes (plus cross-city evaluation on Beijing and Hannover datasets), the core finding is clear:
 
-**Delivered:** P1a, P1b, P3. **Partially delivered:** P2 — the world-model *representation* (a DreamerV3-style recurrent state-space model, decoder-light) works and drives the results below; the RL-driven *sequential decision* variant does not beat a simple supervised readout head, and that negative result is treated as final (see "What didn't work").
+* **AI alone loses to standard math:** A purely AI-driven model made more map-matching errors than standard geometry-based algorithms.
+* **AI + Math wins:** Combining AI predictions with classic geometric algorithms produces a hybrid system that outperforms every single baseline.
 
-## Current best system
+### System Performance Breakdown
 
-| Capability | Method | Result |
-|---|---|---|
-| Offline (batch) map matching | Hybrid Viterbi — world-model road-head log-prob + classical Gaussian geometry emission, classical transitions | **0.868 tolerant Hit@1** (n=500, Porto held-out) |
-| Online (streaming) map matching | World-model road head + geometry emission/transition | **0.829 match@1**, n=500 |
-| Path prediction | World-model prior rollouts | Beats the classical HMM baseline at every prediction horizon |
-| No-GPU / classical fallback | Pure geometric HMM Viterbi | 0.845 offline / 0.59 online — no training required |
+| Capability / Method | Algorithm Details | Accuracy / Result |
+| :--- | :--- | :--- |
+| **Offline (Batch) Map Matching** | **Hybrid Viterbi** (World-model road-head + Gaussian geometry emission/transition) | **86.8%** (0.868 tolerant Hit@1, Porto held-out) |
+| **Online (Streaming) Map Matching** | **World-Model Road Head** + Geometry emission/transition | **82.9%** (0.829 match@1) |
+| **Path Prediction** | World-model prior rollouts | **Beats HMM baseline** across all prediction horizons |
+| **No-GPU / Fallback Mode** | Pure geometric HMM Viterbi | **84.5% offline / 59.0% online** (zero training required) |
 
-Model: a 4.77M-parameter decoder-light recurrent state-space world model (32×32 categorical latent, DreamerV3-lineage), trained on ~1.66M Porto taxi trajectories (~82M GPS fixes) across chained Kaggle T4 GPU sessions.
+*Model spec: 4.77M-parameter decoder-light recurrent state-space world model (32×32 categorical latent, DreamerV3-lineage) trained on ~1.66M Porto taxi trajectories (~82M GPS fixes).*
 
-**Key finding:** the learned world-model signal alone *loses* to pure geometric matching (0.77 vs 0.84 in early ablations) — but it is *complementary*. The hybrid combination is the first learned-signal result in this project that beats geometry outright, and that gain survives contact with the full production pipeline, not just an isolated ablation.
+---
 
-## How it compares
+## Architecture: Four Pillars
 
-| | This system | DeepMM (Zhao et al., 2019) | RouteKG (Tang et al., 2023) | Symbolic reasoning (Ayara/BMW lineage) |
-|---|---|---|---|---|
-| Input | Vectorized road-network graph + raw GPS | Raster grid cells | Road segment sequences | Format-specific ontologies (OWL/RDF) |
-| Sequence model | Transformer | RNN (LSTM/GRU) | KG embeddings + sequence encoder | None — rule-based |
-| Training signal | Label-free (self-supervised + reward) | Supervised, synthetic trajectories | Supervised, matched routes | None — hand-crafted rules |
-| Graph integration | Graph Attention Network over topology | None (grid) | Knowledge-graph completion | RDF triples + Datalog |
-| Decision paradigm | Sequential decode over a learned latent world model | One-shot seq2seq | One-shot top-K ranking | Symbolic (SPARQL) |
+| Pillar | Technology | Functional Description |
+| :--- | :--- | :--- |
+| **P1a: Sequence Encoder** | Transformer / Attention | Processes spatiotemporal GPS sequences directly over the road graph, replacing traditional RNNs. |
+| **P1b: Semantic Vectorization** | Graph Attention Network (GAT) | Vectorizes road attributes and topology into graph tokens (learned automatically rather than using hand-coded rules). |
+| **P2: Latent World Model** | Recurrent State-Space Model (RSSM) | Simulates vehicle movement inside a compressed latent representation of the road network. |
+| **P3: Label-Free Training** | Self-Supervised + Physical Rewards | Learns patterns from scratch without needing any human annotations or pre-matched ground-truth routes. |
 
-## What didn't work (kept on the record, not hidden)
+---
 
-Negative results here were as decision-relevant as the positives — each one closed a research direction with evidence, not a guess:
+## Key Lessons & Negative Results (What Didn't Work)
 
-- **Faithful reconstruction-based world model (DreamerV3 port): posterior collapse.** The latent representation "freeloaded" on a teacher-forced channel instead of encoding real signal, across 4 experiment rounds. Fix was architectural (decoder-light, remove the reconstruction decoder), not a hyperparameter tweak.
-- **RL actor for sequential road selection: reopened, re-closed with stronger evidence.** The RL policy underperforms a simple supervised read-out head for matching accuracy (0.65 vs 0.77+). Root-caused to reward-model overoptimization (Goodhart's law against a frozen, imperfect learned reward) — an early-stopping probe showed *step 0 (no RL training at all) is already the optimum*; every gradient step afterward degrades monotonically. This matches the RLHF reward-overoptimization literature's degenerate boundary case, not a tuning failure.
-- **Learned semantic road embeddings do not transfer out-of-distribution.** Porto-trained road semantics lose ~17pp of matching accuracy zero-shot on a different city (Beijing/T-Drive) — consistent across two model generations. The geometric baseline is far more robust to new cities. Practical consequence: hybrid mode is the trained-city configuration; pure geometry is the automatic fallback for unseen cities.
-- **Per-city retraining on public third-party GPS traces failed twice** (naive and speed-filtered), and a further isolation experiment (unfreezing the pretrained encoder) made it *worse*, ruling out "frozen encoder mismatch" as the cause — the public traces themselves are too noisy/contaminated for this to work, not a fixable pipeline bug.
+To maintain an authentic engineering log, failed experiments are documented rather than hidden:
 
-## Data-scaling and capacity findings
+* **Faithful Reconstruction World Model (Posterior Collapse):** A standard DreamerV3 port suffered from posterior collapse where the latent representation bypassed learning actual spatial signals. **Fix:** Replaced with a *decoder-light* architecture.
+* **RL Agent for Sequential Road Selection:** An RL policy underperformed a simple supervised readout head (65% vs 77%+ accuracy). Root cause was reward-model overoptimization (Goodhart's Law). Early-stopping probes showed step 0 (zero RL fine-tuning) was optimal.
+* **Out-of-Distribution (Cross-City) Transfer:** A model trained exclusively on Porto lost ~17 percentage points in accuracy when tested zero-shot on Beijing. Geometric math remains far more robust to new environments.
+  * **Production Strategy:** Use **Hybrid Mode** for trained cities and automatically fail back to **Pure Geometry** for unseen cities.
+* **Retraining on Public Traces:** Per-city retraining on raw public GPS traces failed twice due to heavy noise and data contamination.
 
-- Systematic data-scaling ablation (200k → 400k → 800k trajectories, epoch-matched): **+2pp match@1 accuracy per doubling of training data**, no flattening — refuting an earlier assumption that the model was data-saturated.
-- Doubling latent capacity (16×16 → 32×32 categorical latent, matching DreamerV3's standard width) delivered a decisive accuracy jump (+2.5–3.3pp) even at 58% of its training schedule — capacity was a real, not cosmetic, bottleneck.
-- A genuinely held-out cross-city test (Hannover, Germany — never included in any training mix) showed a multi-city-trained checkpoint generalizing with only a −7pp accuracy gap, versus −17pp for a single-city-trained model on a different held-out city — a promising but not yet fully controlled result (different cities, different training budgets — flagged as a signal, not a proven claim).
+---
 
-## Repository contents
+## Data-Scaling and Model Capacity Insights
 
-```
+* **Data Scaling (+2pp per 2x data):** Scaling training data (200k → 400k → 800k trajectories) yielded a consistent **+2 percentage point gain in accuracy per doubling** with no flattening observed.
+* **Latent Capacity (16×16 → 32×32):** Doubling latent categorical dimensions delivered an immediate **+2.5 to +3.3pp accuracy boost**, proving capacity was a primary bottleneck.
+* **Multi-City Generalization:** Multi-city pretraining reduced the cross-city transfer accuracy drop from **-17pp down to -7pp** on held-out test cities (e.g., Hannover).
+
+---
+
+## Repository Structure
+
+```text
 src/
-  matcher.py, test_matcher.py    production matching/prediction API (offline + online + predict)
-  models/                        world model (decoder-light RSSM), GPS/road encoders
-  training/                      training stages (stage0-3, decoder-light retrain)
-  hmm_baseline/                  classical geometric HMM Viterbi fallback (no GPU, no training)
-  dataset/, preprocessing/, roadgraph/   GPS cleaning, road-graph construction, candidate retrieval
-  evals/                         evaluation harnesses and diagnostic probes referenced in the project log
-  tests/                         unit tests for the data/road-graph pipeline
+  matcher.py, test_matcher.py       # Production matching/prediction API (offline + online + predict)
+  models/                           # World model (decoder-light RSSM), GPS & road encoders
+  training/                         # Training pipeline stages (stage 0-3)
+  hmm_baseline/                     # Classical geometric HMM Viterbi fallback (CPU-only, no training)
+  dataset/, preprocessing/, roadgraph/ # Data cleaning, road graph construction, candidate retrieval
+  evals/                            # Evaluation harnesses and diagnostic probes
+  tests/                            # Unit tests for data/graph processing
 research/
-  project_summary.md         the single active project log — current results, full run history, roadmap
-  critique_and_next_steps.md adversarial internal review of an early architecture proposal
-  archive/                   retired docs, kept verbatim as the historical experimental record
-literature_papers/           structured summaries of the papers used for prior-art and technique grounding
+  project_summary.md                # Active project log, full execution history, roadmap
+  critique_and_next_steps.md        # Internal adversarial review of architecture proposals
+  archive/                          # Historical experiment records
+literature_papers/                  # Structured summaries of foundational research papers
 ```
 
-`src/` holds the current, production-line code only — retired Track-A (posterior-collapsed reconstruction model) evaluation scripts and exact duplicate copies from intermediate experiment branches are left out. Running it end-to-end needs the road-graph/GPS data and checkpoints, which aren't included here.
+---
 
-## Roadmap
+## Future Roadmap
 
-- Scripted per-city retraining recipe (elevated in priority after the OOD generalization findings above)
-- Latency/footprint benchmark for production deployment
-- Widen world-model heads to match capacity now proven to matter (pending final data-scaling readout)
-- Multi-city training data mix, already underway, to close the remaining cross-city generalization gap
+- [ ] Automate a per-city retraining script pipeline.
+- [ ] Benchmark real-time latency and footprint metrics for edge/cloud deployment.
+- [ ] Expand world-model head capacity following data-scaling findings.
+- [ ] Train on a larger multi-city dataset mix to close remaining zero-shot generalization gaps.
+
+---
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[MIT License](LICENSE

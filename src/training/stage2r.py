@@ -54,7 +54,7 @@ try:
                                       kl_categorical_pergroup, symlog)
     from models.world_model import _mixed_probs, free_bits_kl
     from training.stage2 import (LengthCapped, _stage1_encoder, _soft_road_ce,
-                                  extract_frozen_features)
+                                  extract_frozen_features, road_soft_target)
     from training.stage1 import _road_embeddings, _road_encoder_and_graph, build_loader
     from training.rewards import SuccessorTable, candidate_rewards
 except ImportError:  # flat layout (Kaggle CODE_ROOT on sys.path)
@@ -62,7 +62,7 @@ except ImportError:  # flat layout (Kaggle CODE_ROOT on sys.path)
                                kl_categorical_pergroup, symlog)
     from world_model import _mixed_probs, free_bits_kl  # type: ignore
     from stage2 import (LengthCapped, _stage1_encoder, _soft_road_ce,  # type: ignore
-                         extract_frozen_features)
+                         extract_frozen_features, road_soft_target)
     from stage1 import _road_embeddings, _road_encoder_and_graph, build_loader  # type: ignore
     from rewards import SuccessorTable, candidate_rewards  # type: ignore
 
@@ -73,17 +73,40 @@ def extract_features_r(stage1, road_z: torch.Tensor, batch: dict) -> dict:
     feats = extract_frozen_features(stage1, road_z, batch)
     feats["bearing_deg"] = batch["bearing_deg"]
     feats["cand_speed_kph"] = batch["cand_speed_kph"]
+    # offline NK-Viterbi expert labels [B,L], -1 where absent (collate pads with
+    # -1, and the whole key is missing unless --viterbi-dir was passed)
+    feats["viterbi_seg"] = batch.get("viterbi_seg")
     return feats
 
 
+def _viterbi_path(viterbi_dir, viterbi_alpha: float, city: str, source: str):
+    """Resolve this city:source's offline expert-label file, or None.
+
+    Fails loudly when --viterbi-alpha > 0 but the file is absent instead of
+    quietly training the geometry-only recipe under a treatment-arm name -- the
+    same silent-no-op class as the cache-path and RESUME_SRC bugs this project
+    has already been bitten by twice (project_summary.md)."""
+    if viterbi_dir is None or viterbi_alpha <= 0.0:
+        return None
+    p = Path(viterbi_dir) / f"viterbi_{city}__{source}.npy"
+    if not p.exists():
+        raise FileNotFoundError(
+            f"--viterbi-alpha {viterbi_alpha} but no expert labels at {p}. "
+            f"Run training/relabel_viterbi.py for {city}:{source} first, or drop "
+            f"--viterbi-alpha (refusing to silently run the control recipe).")
+    return str(p)
+
+
 def _road_target_entropy(d_perp: torch.Tensor, cand_mask: torch.Tensor,
-                          sigma: float = 10.0) -> torch.Tensor:
+                          sigma: float = 10.0, vit_seg: torch.Tensor | None = None,
+                          cand_seg: torch.Tensor | None = None,
+                          viterbi_alpha: float = 0.0) -> torch.Tensor:
     """H(soft road target) per sample [..] -- the irreducible floor of
     _soft_road_ce (excess CE = CE - H = KL(target||pred), zero iff the head
-    matches the geometry teacher exactly). Target construction mirrors
-    stage2._soft_road_ce -- keep the two in sync (same `sigma`)."""
-    d = d_perp.masked_fill(~cand_mask, 1e4)
-    p = F.softmax(-(d ** 2) / (2 * sigma ** 2), dim=-1)
+    matches the teacher exactly). Shares `road_soft_target` with the loss
+    itself, so the floor always describes the target actually being trained
+    on (incl. any Viterbi relabeling) rather than a stale geometry-only one."""
+    p = road_soft_target(d_perp, cand_mask, sigma, vit_seg, cand_seg, viterbi_alpha)
     return -(p * p.clamp_min(1e-12).log()).sum(-1)
 
 
@@ -91,7 +114,7 @@ def wm_losses(rssm: RSSM2, heads: HeadsLight, feats: dict, road_z: torch.Tensor,
               succ: SuccessorTable, reward_cfg, beta: float = 1.0,
               lambda_prior_road: float = 0.5, lambda_reward: float = 1.0,
               road_keep_prob: float = 0.6, road_target_sigma: float = 10.0,
-              ss_prob: float = 0.0) -> dict:
+              ss_prob: float = 0.0, viterbi_alpha: float = 0.0) -> dict:
     """Teacher-forced unroll, decoder-light objective:
         L = zgps_huber + speed_mse + road_ce(post) + lambda_prior_road*road_ce(prior)
             + lambda_reward*reward_mse + beta*KL_freebits
@@ -104,8 +127,13 @@ def wm_losses(rssm: RSSM2, heads: HeadsLight, feats: dict, road_z: torch.Tensor,
     pseudo-label to the model's OWN previous road-head argmax pick -- closes
     the train/inference gap diagnosed in diag_jump_vs_priorerror.py (online
     disconnected-jump rate is 4.5x higher right after the model's own choice
-    was wrong; teacher-forcing on ground truth never shows it that state)."""
+    was wrong; teacher-forcing on ground truth never shows it that state).
+
+    `viterbi_alpha` > 0 blends the offline NK-HMM Viterbi expert's chosen
+    segment into the road-CE target (see stage2.road_soft_target) -- the
+    relabeling half of DAgger, which scheduled sampling alone does not do."""
     z1, coords, pos_idx = feats["z1"], feats["coords"], feats["pos_idx"]
+    vit_seg = feats.get("viterbi_seg")
     has_cand, road_embed, valid = feats["has_cand"], feats["road_embed"], feats["valid"]
     speed_mps, bearing = feats["speed_mps"], feats["bearing_deg"]
     cand_seg, cand_head = feats["cand_segment_id"], feats["cand_heading_deg"]
@@ -184,19 +212,25 @@ def wm_losses(rssm: RSSM2, heads: HeadsLight, feats: dict, road_z: torch.Tensor,
             hc_kl = vt & has_cand[:, t]
             if hc_kl.any():
                 ce_prior = _soft_road_ce(road_logits_prior, cand_dperp[:, t], cand_mask[:, t],
-                                          sigma=road_target_sigma)
+                                          sigma=road_target_sigma,
+                                          vit_seg=None if vit_seg is None else vit_seg[:, t],
+                                          cand_seg=cand_seg[:, t], viterbi_alpha=viterbi_alpha)
                 prior_road_l = prior_road_l + ce_prior[hc_kl].sum()
             n_valid += int(vt.sum())
 
         hc = has_cand[:, t]
         if hc.any():
             ce_post = _soft_road_ce(road_logits, cand_dperp[:, t], cand_mask[:, t],
-                                     sigma=road_target_sigma)
+                                     sigma=road_target_sigma,
+                                     vit_seg=None if vit_seg is None else vit_seg[:, t],
+                                     cand_seg=cand_seg[:, t], viterbi_alpha=viterbi_alpha)
             road_l = road_l + ce_post[hc].sum()
             n_road += int(hc.sum())
             with torch.no_grad():
                 tgt_ent_sum = tgt_ent_sum + _road_target_entropy(
-                    cand_dperp[:, t], cand_mask[:, t], sigma=road_target_sigma)[hc].sum()
+                    cand_dperp[:, t], cand_mask[:, t], sigma=road_target_sigma,
+                    vit_seg=None if vit_seg is None else vit_seg[:, t],
+                    cand_seg=cand_seg[:, t], viterbi_alpha=viterbi_alpha)[hc].sum()
 
             # reward targets: label-free physics rewards on the real fix
             if t > 0:
@@ -258,7 +292,8 @@ def train(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city="porto", sour
           grad_clip=100.0, weight_decay=1e-4, out_dir="ckpt",
           ckpt_every=1000, log_every=50, device=None, seed=0, workers=0, resume=None,
           max_hours=None, constant_lr=False, stoch_groups=16, stoch_classes=16,
-          unfreeze_encoder=False, road_target_sigma=10.0, ss_max_prob=0.0, ss_ramp_steps=4000):
+          unfreeze_encoder=False, road_target_sigma=10.0, ss_max_prob=0.0, ss_ramp_steps=4000,
+          viterbi_dir=None, viterbi_alpha=0.0):
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(seed)
     out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
@@ -279,7 +314,8 @@ def train(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city="porto", sour
     stage1 = _stage1_encoder(road_z.size(1), stage1_ckpt, device)
     succ = _successor_table(osm_root, city, device)
     base_ds, _ = build_loader(processed_root, osm_root, city, source, limit_trajs, batch,
-                               workers=workers, cache_dir=str(out / "cache"))
+                               workers=workers, cache_dir=str(out / "cache"),
+                               viterbi_path=_viterbi_path(viterbi_dir, viterbi_alpha, city, source))
 
     from dataset.trajectories import collate_fn
     from torch.utils.data import DataLoader
@@ -322,14 +358,14 @@ def train(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city="porto", sour
 
     loss_kw = dict(beta=beta, lambda_prior_road=lambda_prior_road,
                    lambda_reward=lambda_reward, road_keep_prob=road_keep_prob,
-                   road_target_sigma=road_target_sigma)
+                   road_target_sigma=road_target_sigma, viterbi_alpha=viterbi_alpha)
     extra_meta = {"road_target_sigma": road_target_sigma, "ss_max_prob": ss_max_prob,
-                  "ss_ramp_steps": ss_ramp_steps}
+                  "ss_ramp_steps": ss_ramp_steps, "viterbi_alpha": viterbi_alpha}
     print(f"[stage2r] device={device} bf16={use_bf16} steps={steps} "
           f"curriculum={curriculum_len}->{seq_len}@{curriculum_step} batch={batch} "
           f"lr={lr:.1e} warmup={warmup_steps} norm={norm} lambda_reward={lambda_reward} "
           f"road_target_sigma={road_target_sigma} ss_max_prob={ss_max_prob} "
-          f"ss_ramp_steps={ss_ramp_steps}")
+          f"ss_ramp_steps={ss_ramp_steps} viterbi_alpha={viterbi_alpha}")
     it = loader_at(seq_len if start_step >= curriculum_step else curriculum_len)
     rssm.train(); heads.train()
     t0 = time.time()
@@ -429,7 +465,7 @@ def train_multi(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city_sources
                  out_dir="ckpt", ckpt_every=1000, log_every=50, device=None, seed=0,
                  workers=0, resume=None, max_hours=None, constant_lr=False,
                  stoch_groups=16, stoch_classes=16, road_target_sigma=10.0,
-                 ss_max_prob=0.0, ss_ramp_steps=4000):
+                 ss_max_prob=0.0, ss_ramp_steps=4000, viterbi_dir=None, viterbi_alpha=0.0):
     """Hybrid-cities training: one shared RSSM/HeadsLight trained across several
     cities' (frozen, precomputed) road graphs. Per step, a city is drawn at
     random (weighted by dataset size, sqrt-scaled by default so Porto's ~1.6M
@@ -464,7 +500,8 @@ def train_multi(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city_sources
             f"{city}/{source}: road_dim {road_z_c.size(1)} != {road_dim} (RoadGAT out_dim mismatch)"
         succ_c = _successor_table(osm_root, city, device)
         base_ds_c, _ = build_loader(processed_root, osm_root, city, source, limit_trajs, batch,
-                                     workers=workers, cache_dir=str(out / "cache" / f"{city}__{source}"))
+                                     workers=workers, cache_dir=str(out / "cache" / f"{city}__{source}"),
+                                     viterbi_path=_viterbi_path(viterbi_dir, viterbi_alpha, city, source))
         ctx[(city, source)] = {"road_z": road_z_c, "succ": succ_c, "base_ds": base_ds_c, "it": None,
                                 "n": len(base_ds_c), "loss_hist": []}
         print(f"[stage2r] city={city} source={source} segments={road_z_c.size(0)} trajs={len(base_ds_c)}")
@@ -507,13 +544,13 @@ def train_multi(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city_sources
 
     loss_kw = dict(beta=beta, lambda_prior_road=lambda_prior_road,
                    lambda_reward=lambda_reward, road_keep_prob=road_keep_prob,
-                   road_target_sigma=road_target_sigma)
+                   road_target_sigma=road_target_sigma, viterbi_alpha=viterbi_alpha)
     tag = "multi_" + "-".join(s for _, s in city_sources)
     print(f"[stage2r] MULTI-CITY device={device} bf16={use_bf16} steps={steps} "
           f"curriculum={curriculum_len}->{seq_len}@{curriculum_step} batch={batch} "
           f"lr={lr:.1e} warmup={warmup_steps} norm={norm} lambda_reward={lambda_reward} "
           f"cities={[f'{c}:{s}' for c, s in city_sources]} road_target_sigma={road_target_sigma} "
-          f"ss_max_prob={ss_max_prob} ss_ramp_steps={ss_ramp_steps}")
+          f"ss_max_prob={ss_max_prob} ss_ramp_steps={ss_ramp_steps} viterbi_alpha={viterbi_alpha}")
     for cs in city_sources:
         ctx[cs]["it"] = loader_at(cs, seq_len if start_step >= curriculum_step else curriculum_len)
     rssm.train(); heads.train()
@@ -521,7 +558,7 @@ def train_multi(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city_sources
     extra_meta = {"cities": [f"{c}:{s}" for c, s in city_sources],
                   "city_weights": [w / wsum for w in city_weights],
                   "road_target_sigma": road_target_sigma, "ss_max_prob": ss_max_prob,
-                  "ss_ramp_steps": ss_ramp_steps}
+                  "ss_ramp_steps": ss_ramp_steps, "viterbi_alpha": viterbi_alpha}
     for step in range(start_step, steps):
         if step == curriculum_step:
             for cs in city_sources:
@@ -552,8 +589,19 @@ def train_multi(processed_root, osm_root, stage0_ckpt, stage1_ckpt, city_sources
         if step % log_every == 0:
             per_city = "  ".join(f"{s}:{sum(ctx[(c, s)]['loss_hist'][-50:]) / max(1, len(ctx[(c, s)]['loss_hist'][-50:])):.3f}"
                                   for c, s in city_sources if ctx[(c, s)]["loss_hist"])
+            # tgt_ent/road_ex/prior_ex were printed by single-city train() but not
+            # here, which made multi-city logs unreadable as a trend: `total` is ~89%
+            # KL (a regularizer), and `road` is CE against a SOFT target, so it can
+            # never fall below that target's own entropy. road_ex = road - tgt_ent is
+            # the real distance to the floor.
+            # Also load-bearing for the relabel A/B: --viterbi-alpha CHANGES tgt_ent
+            # (smoke: 1.487 at a=0 vs 1.271 at a=0.5), so treatment's raw `road` is
+            # lower than control's for free, by construction. Only road_ex is
+            # comparable across arms -- comparing `road` would manufacture a win.
             print(f"step {step:06d}  city={cs[1]}  total {float(out_l['total']):.4f}  "
                   f"road {out_l['road']:.4f}  prior_road {out_l['prior_road']:.4f}  "
+                  f"tgt_ent {out_l['tgt_ent']:.4f}  road_ex {out_l['road_ex']:.4f}  "
+                  f"prior_ex {out_l['prior_road_ex']:.4f}  "
                   f"reward {out_l['reward']:.4f}  kl {out_l['kl']:.4f}  "
                   f"cl_gps_z_km {out_l['cl_gps_z']:.4f}  kl_act {out_l['kl_act']:.3f}  "
                   f"lr {sched.get_last_lr()[0]:.2e}  |  per-city(last50) {per_city}", flush=True)
@@ -662,6 +710,56 @@ def _smoke():
           f"tgt_ent {out_l2['tgt_ent']:.3f} (< default {out_l['tgt_ent']:.3f})")
     print("[smoke] ss_prob/sigma-sharpening PASS")
 
+    # Viterbi relabeling (IL round-3 H1). Three things must hold: alpha=0 is
+    # bit-identical to no labels at all (so the control arm is genuinely the old
+    # recipe), alpha>0 actually moves the target toward a NON-nearest segment,
+    # and -1 rows fall back to geometry instead of poisoning the target.
+    B, L, K = feats["cand_segment_id"].shape
+    far = feats["cand_d_perp_m"].argmax(-1, keepdim=True)          # deliberately NOT the nearest
+    vit = feats["cand_segment_id"].gather(-1, far).squeeze(-1).clone()
+    vit[:, 0] = -1                                                  # first fix: expert abstains
+    feats_v = dict(feats, viterbi_seg=vit)
+
+    base = wm_losses(rssm, heads, feats, road_z, succ, reward_cfg)
+    a0 = wm_losses(rssm, heads, feats_v, road_z, succ, reward_cfg, viterbi_alpha=0.0)
+    assert float(a0["tgt_ent"]) == float(base["tgt_ent"]), \
+        f"viterbi_alpha=0 changed the target: {a0['tgt_ent']} != {base['tgt_ent']}"
+
+    tgt_geo = road_soft_target(feats["cand_d_perp_m"][:, 1], feats["cand_mask"][:, 1], 10.0)
+    tgt_vit = road_soft_target(feats["cand_d_perp_m"][:, 1], feats["cand_mask"][:, 1], 10.0,
+                                vit_seg=vit[:, 1], cand_seg=feats["cand_segment_id"][:, 1],
+                                viterbi_alpha=0.5)
+    moved = (tgt_vit.gather(-1, far[:, 1]) - tgt_geo.gather(-1, far[:, 1])).min()
+    assert float(moved) > 0.4, f"alpha=0.5 barely moved mass onto the expert slot: {moved:.3f}"
+    tgt_abstain = road_soft_target(feats["cand_d_perp_m"][:, 0], feats["cand_mask"][:, 0], 10.0,
+                                    vit_seg=vit[:, 0], cand_seg=feats["cand_segment_id"][:, 0],
+                                    viterbi_alpha=0.5)
+    assert torch.allclose(tgt_abstain,
+                          road_soft_target(feats["cand_d_perp_m"][:, 0], feats["cand_mask"][:, 0], 10.0)), \
+        "vit_seg=-1 (expert abstained) must fall back to the pure geometric target"
+
+    rssm3 = RSSM2(obs_dim=256, road_dim=256, norm="batch")
+    heads3 = HeadsLight(h_dim=rssm3.h_dim, road_dim=256)
+    opt3 = torch.optim.AdamW(list(rssm3.parameters()) + list(heads3.parameters()), lr=3e-3)
+    rssm3.train(); heads3.train()
+    first3 = last3 = None
+    for i in range(150):
+        opt3.zero_grad()
+        out_l3 = wm_losses(rssm3, heads3, feats_v, road_z, succ, reward_cfg,
+                           road_target_sigma=7.0, ss_prob=0.25, viterbi_alpha=0.5)
+        assert torch.isfinite(out_l3["total"]), "viterbi-relabel path produced a non-finite loss"
+        out_l3["total"].backward()
+        torch.nn.utils.clip_grad_norm_(list(rssm3.parameters()) + list(heads3.parameters()), 100.0)
+        opt3.step()
+        if first3 is None:
+            first3 = float(out_l3["total"])
+        last3 = float(out_l3["total"])
+    assert last3 - kl_floor < 0.6 * (first3 - kl_floor), \
+        f"viterbi_alpha=0.5 path did not learn: {first3:.3f} -> {last3:.3f}"
+    print(f"[smoke] viterbi_alpha=0.5 total {first3:.3f} -> {last3:.3f}  "
+          f"tgt_ent {out_l3['tgt_ent']:.3f}  expert-slot mass +{float(moved):.3f}")
+    print("[smoke] viterbi-relabel PASS")
+
 
 def main():
     p = argparse.ArgumentParser(description="research2 decoder-light world-model pretraining")
@@ -717,6 +815,17 @@ def main():
                         "model's own choice was wrong -- this closes that train/inference gap.")
     p.add_argument("--ss-ramp-steps", type=int, default=4000,
                    help="Linear ramp length (in steps) from ss_prob=0 to --ss-max-prob.")
+    p.add_argument("--viterbi-dir", default=None,
+                   help="Directory of offline NK-HMM Viterbi expert labels written by "
+                        "training/relabel_viterbi.py, one viterbi_{city}__{source}.npy per "
+                        "city:source. Only read when --viterbi-alpha > 0.")
+    p.add_argument("--viterbi-alpha", type=float, default=0.0,
+                   help="DAgger relabeling weight: road-CE target becomes "
+                        "(1-a)*softmax(-d^2/2sigma^2) + a*onehot(Viterbi segment). Default 0.0 "
+                        "= old geometry-only target, bit-for-bit. Scheduled sampling makes the "
+                        "student visit its own states but still scores them against the "
+                        "topology-blind per-point label; this supplies the expert relabeling "
+                        "half (Ross & Bagnell AISTATS'11, project_summary.md IL round-3 H1).")
     p.add_argument("--multi-city", nargs="+", default=None, metavar="CITY:SOURCE",
                     help="Hybrid-cities training: space-separated city:source pairs, e.g. "
                          "'porto:porto tdrive:tdrive tdrive:geolife_car cabspotting:cabspotting "
@@ -748,7 +857,8 @@ def main():
                     workers=a.workers, resume=a.resume, max_hours=a.max_hours,
                     constant_lr=a.constant_lr, stoch_groups=a.stoch_groups,
                     stoch_classes=a.stoch_classes, road_target_sigma=a.road_target_sigma,
-                    ss_max_prob=a.ss_max_prob, ss_ramp_steps=a.ss_ramp_steps)
+                    ss_max_prob=a.ss_max_prob, ss_ramp_steps=a.ss_ramp_steps,
+                    viterbi_dir=a.viterbi_dir, viterbi_alpha=a.viterbi_alpha)
         return
     train(a.processed_root, a.osm_root, a.stage0_ckpt, a.stage1_ckpt, a.city, a.source,
           a.limit_trajs, a.batch, a.steps, a.curriculum_step, a.seq_len, a.curriculum_len,
@@ -758,7 +868,8 @@ def main():
           device=a.device, workers=a.workers, resume=a.resume, max_hours=a.max_hours,
           constant_lr=a.constant_lr, stoch_groups=a.stoch_groups, stoch_classes=a.stoch_classes,
           unfreeze_encoder=a.unfreeze_encoder, road_target_sigma=a.road_target_sigma,
-          ss_max_prob=a.ss_max_prob, ss_ramp_steps=a.ss_ramp_steps)
+          ss_max_prob=a.ss_max_prob, ss_ramp_steps=a.ss_ramp_steps,
+          viterbi_dir=a.viterbi_dir, viterbi_alpha=a.viterbi_alpha)
 
 
 if __name__ == "__main__":

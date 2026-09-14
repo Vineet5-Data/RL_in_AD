@@ -95,7 +95,7 @@ def _contiguous_groups(traj_id: np.ndarray) -> list[tuple[int, int]]:
 class TrajectoryGraphDataset(Dataset):
     def __init__(self, df: pd.DataFrame, indices: dict, seq_cfg: SequenceConfig | None = None,
                  retr_cfg: RetrievalConfig | None = None, cache_path: str | Path | None = None,
-                 perm_seed: int | None = None):
+                 perm_seed: int | None = None, viterbi_path: str | Path | None = None):
         """`indices` maps source name -> CandidateIndex for that source's city.
 
         Candidates are retrieved once for the whole df (vectorized bulk STRtree
@@ -114,6 +114,15 @@ class TrajectoryGraphDataset(Dataset):
         `perm_seed=None` (default, training) draws from global numpy state.
         `perm_seed=<int>` uses a dedicated Generator -- reproducible eval runs
         (shuffle=False, single-process) get the same permutation sequence.
+
+        `viterbi_path`: optional .npy of offline NK-HMM Viterbi expert labels
+        (one segment_id per df row, -1 where the expert produced none), written
+        by `relabel_viterbi.py`. Emitted per item as `viterbi_seg` for the
+        DAgger relabeling target (see stage2.road_soft_target). Stored as a
+        SEGMENT ID, not a candidate slot, precisely because Change 7A permutes
+        the K slots on every __getitem__ call -- a slot index would be stale the
+        moment it was written. Loaded mmap_mode='r' (one int64 column, and the
+        Porto pool alone is 82.4M rows).
         """
         self.df = df.reset_index(drop=True)
         self.indices = indices
@@ -123,6 +132,17 @@ class TrajectoryGraphDataset(Dataset):
         self.groups = [(s, e) for (s, e) in groups if (e - s) >= self.seq.min_len]
         self._cand = self._load_or_build_cache(cache_path)
         self._perm_rng = np.random.default_rng(perm_seed) if perm_seed is not None else None
+        self._viterbi = None
+        if viterbi_path is not None:
+            vit = np.load(str(viterbi_path), mmap_mode="r")
+            # Same row-prefix contract as the candidate cache: labels are written
+            # against a df built by the same top-down parquet read, so row i maps
+            # to row i for every i < n. Shorter than the df means a stale/partial
+            # relabel -- fail loudly rather than silently train on garbage rows.
+            if len(vit) < len(self.df):
+                raise RuntimeError(f"viterbi labels stale: {len(vit)} rows < df {len(self.df)}"
+                                    f" ({viterbi_path}) -- rerun relabel_viterbi.py")
+            self._viterbi = vit
 
     _CACHE_FIELDS = ("segment_id", "d_perp_m", "heading_deg", "speed_kph", "oneway",
                       "highway_id", "mask")
@@ -225,7 +245,16 @@ class TrajectoryGraphDataset(Dataset):
         rows = np.arange(L)[:, None]
         cand = {name: arr[s:e][rows, order] for name, arr in self._cand.items()}
 
+        # np.array(copy=True), not ascontiguousarray: a plain memmap slice is already
+        # contiguous, so ascontiguousarray hands back a read-only VIEW and torch warns
+        # about undefined behavior on write. The cand_* fields escape this only because
+        # their fancy-index always copies.
+        item_vit = ({} if self._viterbi is None else
+                    {"viterbi_seg": torch.from_numpy(
+                        np.array(self._viterbi[s:e], dtype=np.int64))})
+
         return {
+            **item_vit,
             "lat": torch.tensor(g["lat"].to_numpy(), dtype=torch.float32),
             "lon": torch.tensor(g["lon"].to_numpy(), dtype=torch.float32),
             "dt": torch.tensor(g["dt"].to_numpy(), dtype=torch.float32),
@@ -259,6 +288,10 @@ def collate_fn(batch: list[dict]) -> dict:
         out[k] = torch.zeros(B, Lmax, dtype=batch[0][k].dtype)
     for k in cand_keys:
         out[k] = torch.zeros(B, Lmax, K, dtype=batch[0][k].dtype)
+    # pad with -1, not 0: 0 is a real segment_id, and a padded slot matching a
+    # real candidate would silently relabel it (see road_soft_target's vit_seg>=0)
+    if "viterbi_seg" in batch[0]:
+        out["viterbi_seg"] = torch.full((B, Lmax), -1, dtype=torch.int64)
 
     for b, item in enumerate(batch):
         L = item["length"]
@@ -267,6 +300,8 @@ def collate_fn(batch: list[dict]) -> dict:
             out[k][b, :L] = item[k]
         for k in cand_keys:
             out[k][b, :L] = item[k]
+        if "viterbi_seg" in out:
+            out["viterbi_seg"][b, :L] = item["viterbi_seg"]
     return out
 
 
@@ -298,3 +333,35 @@ if __name__ == "__main__":
         assert np.array_equal(np.asarray(out[f]), ref[f]), f"{f} value mismatch"
         assert np.array_equal(out[f][3:9][r, order], ref[f][3:9][r, order]), f"{f} slice mismatch"
     print("[selfcheck] memmap round-trip OK")
+
+    # viterbi expert labels: row alignment survives __getitem__ (which permutes the
+    # K candidate slots) and collate's right-padding. Misalignment here would train
+    # on another fix's label and never raise -- the one failure mode worth a test.
+    import pandas as pd
+    import torch
+
+    traj = np.repeat([0, 1], [20, 17])
+    df = pd.DataFrame({"traj_id": traj, "source": "s", "t": np.arange(n, dtype=np.int64),
+                       "lat": np.linspace(41.1, 41.2, n), "lon": np.linspace(-8.6, -8.5, n),
+                       "dt": np.ones(n), "speed_mps": np.ones(n), "bearing_deg": np.zeros(n)})
+    vit = ref["segment_id"][:, 0].copy()          # slot 0 of each row, pre-permutation
+    vitp = Path(tmpd) / "v.npy"
+    np.save(vitp, vit)
+
+    ds = TrajectoryGraphDataset(df, {}, SequenceConfig(min_len=2), RetrievalConfig(k=k),
+                                cache_path=str(npz), perm_seed=0, viterbi_path=str(vitp))
+    batch = collate_fn([ds[0], ds[1]])
+    assert batch["viterbi_seg"].shape == batch["seq_mask"].shape
+    for i, (s, e) in enumerate(ds.groups):
+        L = int(batch["length"][i])
+        assert np.array_equal(batch["viterbi_seg"][i, :L].numpy(), vit[s:s + L]), \
+            f"traj {i}: label rows misaligned with df rows"
+        assert bool((batch["viterbi_seg"][i, L:] == -1).all()), "padding must be -1, not a real id"
+        # the label must still be findable among that fix's permuted candidate slots
+        hit = (batch["cand_segment_id"][i, :L] == batch["viterbi_seg"][i, :L].unsqueeze(-1))
+        assert bool(hit.any(-1).all()), f"traj {i}: label lost by the slot permutation"
+    ds_off = TrajectoryGraphDataset(df, {}, SequenceConfig(min_len=2), RetrievalConfig(k=k),
+                                    cache_path=str(npz), perm_seed=0)
+    assert "viterbi_seg" not in collate_fn([ds_off[0]]), \
+        "no viterbi_path must leave the key absent, so wm_losses falls back to geometry"
+    print("[selfcheck] viterbi label alignment OK")

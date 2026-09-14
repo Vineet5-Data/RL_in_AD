@@ -55,7 +55,8 @@ def _road_encoder_and_graph(osm_root, city, stage0_ckpt, device):
     return enc, data
 
 
-def build_loader(processed_root, osm_root, city, source, limit_trajs, batch, workers=0, cache_dir="ckpt/cache"):
+def build_loader(processed_root, osm_root, city, source, limit_trajs, batch, workers=0,
+                 cache_dir="ckpt/cache", viterbi_path=None):
     from torch.utils.data import DataLoader
     from dataset.trajectories import load_source_df, TrajectoryGraphDataset, collate_fn
     from dataset.candidates import CandidateIndex
@@ -68,7 +69,8 @@ def build_loader(processed_root, osm_root, city, source, limit_trajs, batch, wor
     if cache_dir is not None:
         n = limit_trajs if limit_trajs is not None else "all"
         cache_path = Path(cache_dir) / f"{source}_n{n}_r{retr.radius_m:g}_k{retr.k}.npz"
-    ds = TrajectoryGraphDataset(df, {source: ci}, SequenceConfig(), retr, cache_path=cache_path)
+    ds = TrajectoryGraphDataset(df, {source: ci}, SequenceConfig(), retr, cache_path=cache_path,
+                                viterbi_path=viterbi_path)
     loader = DataLoader(ds, batch_size=batch, shuffle=True, collate_fn=collate_fn, num_workers=workers)
     return ds, loader
 

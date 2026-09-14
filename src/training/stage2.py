@@ -112,23 +112,54 @@ def extract_frozen_features(stage1, road_z: torch.Tensor, batch: dict) -> dict:
     }
 
 
+def road_soft_target(d_perp: torch.Tensor, cand_mask: torch.Tensor, sigma: float = 10.0,
+                      vit_seg: torch.Tensor | None = None, cand_seg: torch.Tensor | None = None,
+                      viterbi_alpha: float = 0.0) -> torch.Tensor:
+    """The road-CE soft target, [.., K]. SINGLE definition -- both `_soft_road_ce`
+    (the loss) and stage2r's `_road_target_entropy` (the loss's own floor, used
+    for the road_ex metric) call this, so the two can never silently drift apart.
+
+    Base target: softmax(-d_perp^2 / 2*sigma^2), the per-point geometric
+    projection pseudo-label. `sigma` < 10 sharpens it (ASTRA-style confidence
+    sharpening, literature_papers/astra_self_training_weak_supervision.json).
+
+    `viterbi_alpha` > 0 blends in a one-hot on the segment chosen by the OFFLINE
+    NK-HMM Viterbi expert (`relabel_viterbi.py`):
+
+        tgt = (1 - a) * softmax(-d^2/2s^2)  +  a * onehot(viterbi segment)
+
+    This is the DAgger relabeling step (project_summary.md IL round-3 H1): the
+    per-point projection target is topology-blind and is exactly what behavior
+    cloning's O(T^2 eps) compounding-error bound applies to, whereas the Viterbi
+    path is a whole-trajectory, topology-consistent expert action for the SAME
+    state. NK-only emission is used deliberately -- it never sees the student's
+    road head, so relabeling cannot become a self-confirmation loop.
+
+    Rows where the expert produced no label (vit_seg < 0, e.g. a fix dropped by
+    the gap/validity split) or whose chosen segment is not among this fix's K
+    candidates fall back to the pure geometric target, untouched.
+    viterbi_alpha=0 (default) reproduces the old target bit-for-bit."""
+    d = d_perp.masked_fill(~cand_mask, 1e4)
+    tgt = F.softmax(-(d ** 2) / (2 * sigma ** 2), dim=-1)
+    if viterbi_alpha > 0.0 and vit_seg is not None and cand_seg is not None:
+        hit = (cand_seg == vit_seg.unsqueeze(-1)) & cand_mask & (vit_seg >= 0).unsqueeze(-1)
+        blended = (1.0 - viterbi_alpha) * tgt + viterbi_alpha * hit.to(tgt.dtype)
+        tgt = torch.where(hit.any(-1, keepdim=True), blended, tgt)
+    return tgt
+
+
 def _soft_road_ce(logits: torch.Tensor, d_perp: torch.Tensor, cand_mask: torch.Tensor,
-                   sigma: float = 10.0) -> torch.Tensor:
-    """Change 9 (ported from Stage-1's gps_encoder.py): CE against a soft
-    emission target softmax(-d_perp^2 / 2*sigma^2), sigma=10m (GPS noise
-    scale) by default, instead of hard argmin. logits/d_perp/cand_mask:
+                   sigma: float = 10.0, vit_seg: torch.Tensor | None = None,
+                   cand_seg: torch.Tensor | None = None,
+                   viterbi_alpha: float = 0.0) -> torch.Tensor:
+    """Change 9 (ported from Stage-1's gps_encoder.py): CE against the soft
+    emission target built by `road_soft_target` (see there for sigma /
+    viterbi_alpha), instead of hard argmin. logits/d_perp/cand_mask:
     [B,K] for a single timestep -> per-sample CE [B]. NOTE: masked_fill uses
     a large finite constant, not +-inf -- soft_tgt is exactly 0 on masked
-    slots and logp is ~-inf there; 0 * -inf = NaN, 0 * finite = 0.
-
-    `sigma` < 10 sharpens the target (ASTRA-style confidence sharpening of a
-    noisy weak-supervision soft label, literature_papers/
-    astra_self_training_weak_supervision.json) -- lowers the pseudo-label's
-    entropy floor with zero new data/params. Default unchanged for callers
-    that don't pass it (stage2.py's own frozen Track-A path)."""
+    slots and logp is ~-inf there; 0 * -inf = NaN, 0 * finite = 0."""
     logits = logits.masked_fill(~cand_mask, -1e4)
-    d = d_perp.masked_fill(~cand_mask, 1e4)
-    soft_tgt = F.softmax(-(d ** 2) / (2 * sigma ** 2), dim=-1)
+    soft_tgt = road_soft_target(d_perp, cand_mask, sigma, vit_seg, cand_seg, viterbi_alpha)
     logp = F.log_softmax(logits, dim=-1)
     return -(soft_tgt * logp).sum(-1)
 
